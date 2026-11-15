@@ -1,0 +1,41 @@
+{
+  "title": "Allem XR: Mixed Reality SDK for React",
+  "description": "Mixed Reality SDK for React — hand tracking, spatial UI, and immersive experiences. Built with React and WebXR, organized as a Turborepo monorepo with 8 packages. Companion to Allem UI and Allem SDK.",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Allem, Ahmed",
+      "orcid": "0009-0003-4937-5858"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "react",
+    "mixed-reality",
+    "webxr",
+    "spatial-computing",
+    "hand-tracking",
+    "typescript",
+    "turborepo"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/kingofmit/allem-xr",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/kingofmit/allem-ui",
+      "relation": "isRelatedTo",
+      "resource_type": "software",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/kingofmit/allem-sdk",
+      "relation": "isRelatedTo",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ]
+}

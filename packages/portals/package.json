@@ -1,0 +1,53 @@
+{
+  "name": "@allem-xr/portals",
+  "version": "0.1.0",
+  "description": "AR passthrough portals, scene transitions, and boundaries for React XR.",
+  "license": "MIT",
+  "author": "Ahmed Allem",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "@allem-xr/core": "^0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kingofmit/allem-xr.git",
+    "directory": "packages/portals"
+  },
+  "keywords": [
+    "allem-xr",
+    "react",
+    "ar-portal",
+    "scene-transition",
+    "passthrough",
+    "webxr",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
