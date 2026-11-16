@@ -240,16 +240,23 @@ Your App
 
 ## Demo Apps
 
-The repo includes working demo apps in `apps/`:
+The repo includes 6 working demo apps in `apps/`:
 
-- **[Physics Playground](./apps/physics-playground)** — Spawn balls and boxes, real-world plane colliders, hand physics
-- **[Spatial Notes](./apps/spatial-notes)** — Place sticky notes on real surfaces with pinch gestures
+| Demo | Showcases | Description |
+|------|-----------|-------------|
+| **[Physics Playground](./apps/physics-playground)** | physics, spatial, hands | Spawn balls and boxes that bounce off real surfaces |
+| **[Spatial Notes](./apps/spatial-notes)** | spatial, hands | Place sticky notes on real surfaces with pinch gestures |
+| **[Portal Gallery](./apps/portal-gallery)** | portals, hands | Walk through portals into forest, ocean, and space worlds |
+| **[Avatar Mirror](./apps/avatar-mirror)** | avatars, hands, audio | See yourself in a VR mirror with hand-tracked avatar |
+| **[Spatial Dashboard](./apps/spatial-dashboard)** | ui, hands | Floating panels with sliders, toggles, buttons, progress bars |
+| **[Gesture Lab](./apps/gesture-lab)** | hands, ui | Real-time gesture detection visualizer with hand rays |
 
 Run a demo:
 
 ```bash
 pnpm install
 pnpm --filter physics-playground dev
+# or: spatial-notes, portal-gallery, avatar-mirror, spatial-dashboard, gesture-lab
 ```
 
 ## Development
