@@ -32,7 +32,7 @@ export function SpatialAudioSource({
   // Update position when prop changes
   useEffect(() => {
     audio.setPosition(position[0], position[1], position[2])
-  }, [position[0], position[1], position[2], audio.setPosition])
+  }, [position[0], position[1], position[2]])
 
   return null // No visual output
 }

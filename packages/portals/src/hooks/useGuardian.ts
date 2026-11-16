@@ -7,7 +7,7 @@ import type { GuardianState } from '../types'
 /**
  * Track user proximity to the guardian boundary.
  */
-export function useGuardian(radius: number = 2): GuardianState {
+export function useGuardian(radius: number = 2, fadeDistance: number = 0.5): GuardianState {
   const { camera } = useThree()
   const [state, setState] = useState<GuardianState>({
     isNearBoundary: false,
@@ -18,9 +18,8 @@ export function useGuardian(radius: number = 2): GuardianState {
   useFrame(() => {
     const dist = Math.sqrt(camera.position.x ** 2 + camera.position.z ** 2)
     const distToBoundary = Math.max(0, radius - dist)
-    const isNear = distToBoundary < 0.5
+    const isNear = distToBoundary < fadeDistance
 
-    // Only update React state when nearness changes
     if (isNear !== prevNearRef.current) {
       prevNearRef.current = isNear
       setState({ isNearBoundary: isNear, distanceToBoundary: distToBoundary })

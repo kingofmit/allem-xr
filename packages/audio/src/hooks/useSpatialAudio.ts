@@ -65,17 +65,13 @@ export function useSpatialAudio(src: string, config?: SpatialAudioConfig): Spati
     pannerRef.current = panner
     gainRef.current = gain
 
-    audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration)
-    })
+    const handleMetadata = () => setDuration(audio.duration)
+    const handleEnded = () => setIsPlaying(false)
+    const handleTimeUpdate = () => setCurrentTime(audio.currentTime)
 
-    audio.addEventListener('ended', () => {
-      setIsPlaying(false)
-    })
-
-    audio.addEventListener('timeupdate', () => {
-      setCurrentTime(audio.currentTime)
-    })
+    audio.addEventListener('loadedmetadata', handleMetadata)
+    audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('timeupdate', handleTimeUpdate)
 
     if (autoplay) {
       resumeAudioContext().then(() => {
@@ -85,6 +81,9 @@ export function useSpatialAudio(src: string, config?: SpatialAudioConfig): Spati
     }
 
     return () => {
+      audio.removeEventListener('loadedmetadata', handleMetadata)
+      audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.pause()
       audio.src = ''
       source.disconnect()
@@ -122,10 +121,9 @@ export function useSpatialAudio(src: string, config?: SpatialAudioConfig): Spati
   const play = useCallback(async () => {
     await resumeAudioContext()
     const audio = audioRef.current
-    if (audio) {
-      await audio.play()
-      setIsPlaying(true)
-    }
+    if (!audio) return
+    await audio.play()
+    setIsPlaying(true)
   }, [])
 
   const pause = useCallback(() => {

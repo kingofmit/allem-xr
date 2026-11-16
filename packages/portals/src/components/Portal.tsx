@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useRef, useMemo } from 'react'
+import React, { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import type { Group } from 'three'
 import type { PortalProps } from '../types'
 
-// Cached vector for distance calculation
 const _portalPos = new THREE.Vector3()
+
+// Stencil ref value for this portal
+const STENCIL_REF = 1
 
 /**
  * A portal — a window into another virtual scene.
@@ -26,36 +28,67 @@ export function Portal({
   borderWidth = 0.02,
 }: PortalProps) {
   const groupRef = useRef<Group>(null)
+  const contentRef = useRef<Group>(null)
   const { camera } = useThree()
   const wasInsideRef = useRef(false)
 
-  // Stencil material — writes to stencil buffer, doesn't render visible pixels
-  const stencilMaterial = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        colorWrite: false,
-        depthWrite: false,
-        stencilWrite: true,
-        stencilRef: 1,
-        stencilFunc: THREE.AlwaysStencilFunc,
-        stencilZPass: THREE.ReplaceStencilOp,
-      }),
+  // Stencil mask material — writes stencil, doesn't render pixels
+  const stencilWriteMaterial = useMemo(
+    () => new THREE.MeshBasicMaterial({
+      colorWrite: false,
+      depthWrite: false,
+      stencilWrite: true,
+      stencilRef: STENCIL_REF,
+      stencilFunc: THREE.AlwaysStencilFunc,
+      stencilZPass: THREE.ReplaceStencilOp,
+      stencilFail: THREE.KeepStencilOp,
+      stencilZFail: THREE.KeepStencilOp,
+    }),
     []
   )
 
   // Border material
   const borderMaterial = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: borderColor,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.8,
-      }),
+    () => new THREE.MeshBasicMaterial({
+      color: borderColor,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.8,
+    }),
     [borderColor]
   )
 
-  // Check proximity for enter/exit events
+  // Memoize border geometries
+  const borderGeos = useMemo(() => ({
+    top: new THREE.PlaneGeometry(size[0] + borderWidth * 2, borderWidth),
+    bottom: new THREE.PlaneGeometry(size[0] + borderWidth * 2, borderWidth),
+    left: new THREE.PlaneGeometry(borderWidth, size[1]),
+    right: new THREE.PlaneGeometry(borderWidth, size[1]),
+  }), [size[0], size[1], borderWidth])
+
+  // Apply stencil TEST to all child meshes so they only render inside the portal
+  useEffect(() => {
+    const content = contentRef.current
+    if (!content) return
+
+    content.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        for (const mat of materials) {
+          mat.stencilWrite = false
+          mat.stencilRef = STENCIL_REF
+          mat.stencilFunc = THREE.EqualStencilFunc
+          mat.stencilFail = THREE.KeepStencilOp
+          mat.stencilZFail = THREE.KeepStencilOp
+          mat.stencilZPass = THREE.KeepStencilOp
+          mat.needsUpdate = true
+        }
+      }
+    })
+  })
+
+  // Proximity detection for enter/exit events
   useFrame(() => {
     if (!groupRef.current || (!onEnter && !onExit)) return
 
@@ -71,42 +104,37 @@ export function Portal({
     wasInsideRef.current = isInside
   })
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      stencilWriteMaterial.dispose()
+      borderMaterial.dispose()
+      borderGeos.top.dispose()
+      borderGeos.bottom.dispose()
+      borderGeos.left.dispose()
+      borderGeos.right.dispose()
+    }
+  }, [stencilWriteMaterial, borderMaterial, borderGeos])
+
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
-      {/* Stencil mask — the portal opening */}
-      <mesh material={stencilMaterial} renderOrder={-1}>
+      {/* Stencil mask — the portal opening. Render first. */}
+      <mesh material={stencilWriteMaterial} renderOrder={0}>
         <planeGeometry args={[size[0], size[1]]} />
       </mesh>
 
-      {/* Portal content — only visible where stencil is set */}
-      <group>
-        {React.Children.map(children, child => {
-          if (!React.isValidElement(child)) return child
-          // Clone with stencil test material override would be complex.
-          // Instead, render children normally — the stencil mask limits visibility.
-          return child
-        })}
+      {/* Portal content — stencil tested, only visible through mask */}
+      <group ref={contentRef} renderOrder={1}>
+        {children}
       </group>
 
       {/* Border frame */}
       {renderBorder && (
         <>
-          {/* Top */}
-          <mesh material={borderMaterial} position={[0, size[1] / 2, 0]}>
-            <planeGeometry args={[size[0] + borderWidth * 2, borderWidth]} />
-          </mesh>
-          {/* Bottom */}
-          <mesh material={borderMaterial} position={[0, -size[1] / 2, 0]}>
-            <planeGeometry args={[size[0] + borderWidth * 2, borderWidth]} />
-          </mesh>
-          {/* Left */}
-          <mesh material={borderMaterial} position={[-size[0] / 2, 0, 0]}>
-            <planeGeometry args={[borderWidth, size[1]]} />
-          </mesh>
-          {/* Right */}
-          <mesh material={borderMaterial} position={[size[0] / 2, 0, 0]}>
-            <planeGeometry args={[borderWidth, size[1]]} />
-          </mesh>
+          <mesh material={borderMaterial} geometry={borderGeos.top} position={[0, size[1] / 2, 0]} />
+          <mesh material={borderMaterial} geometry={borderGeos.bottom} position={[0, -size[1] / 2, 0]} />
+          <mesh material={borderMaterial} geometry={borderGeos.left} position={[-size[0] / 2, 0, 0]} />
+          <mesh material={borderMaterial} geometry={borderGeos.right} position={[size[0] / 2, 0, 0]} />
         </>
       )}
     </group>

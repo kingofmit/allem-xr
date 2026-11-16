@@ -1,6 +1,5 @@
 'use client'
 
-import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { getAudioContext } from '../audioContext'
 
@@ -14,8 +13,6 @@ const _up = { x: 0, y: 1, z: 0 }
  */
 export function useAudioListener() {
   const { camera } = useThree()
-  const listenerInitRef = useRef(false)
-
   useFrame(() => {
     const ctx = getAudioContext()
     const listener = ctx.listener
@@ -37,6 +34,12 @@ export function useAudioListener() {
     _up.x = m[4]
     _up.y = m[5]
     _up.z = m[6]
+
+    // Normalize (matrix could have non-uniform scale)
+    const fLen = Math.sqrt(_forward.x * _forward.x + _forward.y * _forward.y + _forward.z * _forward.z)
+    if (fLen > 0) { _forward.x /= fLen; _forward.y /= fLen; _forward.z /= fLen }
+    const uLen = Math.sqrt(_up.x * _up.x + _up.y * _up.y + _up.z * _up.z)
+    if (uLen > 0) { _up.x /= uLen; _up.y /= uLen; _up.z /= uLen }
 
     if (listener.forwardX) {
       listener.forwardX.setValueAtTime(_forward.x, ctx.currentTime)

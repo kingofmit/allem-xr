@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useMemo } from 'react'
+import React, { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import type { GuardianProps } from '../types'
@@ -75,6 +75,14 @@ export function Guardian({
     }
     wasBreachedRef.current = isBreached
   })
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      geometry.dispose()
+      material.dispose()
+    }
+  }, [geometry, material])
 
   if (!visible) return null
 

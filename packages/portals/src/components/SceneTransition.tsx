@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import type { SceneTransitionProps } from '../types'
 
 /**
  * Full-screen transition effect (fade to color).
- * Renders a screen-space quad in front of the camera.
+ * When active becomes true: fades in over duration/2, fires onComplete, then fades out over duration/2.
  */
 export function SceneTransition({
   active,
@@ -19,62 +19,72 @@ export function SceneTransition({
   const { camera } = useThree()
   const meshRef = useRef<THREE.Mesh>(null)
   const progressRef = useRef(0)
-  const directionRef = useRef<'in' | 'out'>('in')
+  const phaseRef = useRef<'idle' | 'fade-in' | 'fade-out'>('idle')
   const startTimeRef = useRef(0)
   const onCompleteRef = useRef(onComplete)
   onCompleteRef.current = onComplete
 
+  const geometry = useMemo(() => new THREE.PlaneGeometry(10, 10), [])
+  const material = useMemo(
+    () => new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0,
+      depthTest: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+    [color]
+  )
+
+  // Trigger transition on active change
   useEffect(() => {
     if (active) {
-      directionRef.current = 'in'
-      startTimeRef.current = performance.now()
-      progressRef.current = 0
-    } else if (progressRef.current > 0) {
-      directionRef.current = 'out'
+      phaseRef.current = 'fade-in'
       startTimeRef.current = performance.now()
     }
   }, [active])
 
   useFrame(() => {
     const mesh = meshRef.current
-    if (!mesh) return
-
-    const elapsed = performance.now() - startTimeRef.current
-    const durationMs = duration / 2 // half for fade in, half for fade out
-    const t = Math.min(1, elapsed / durationMs)
-
-    if (directionRef.current === 'in') {
-      progressRef.current = t
-      if (t >= 1 && directionRef.current === 'in') {
-        directionRef.current = 'out'
-        startTimeRef.current = performance.now()
-        onCompleteRef.current?.()
-      }
-    } else {
-      progressRef.current = 1 - t
+    if (!mesh || phaseRef.current === 'idle') {
+      if (mesh) mesh.visible = false
+      return
     }
 
-    const mat = mesh.material as THREE.MeshBasicMaterial
-    mat.opacity = progressRef.current
+    const halfDuration = duration / 2
+    const elapsed = performance.now() - startTimeRef.current
+
+    if (phaseRef.current === 'fade-in') {
+      progressRef.current = Math.min(1, elapsed / halfDuration)
+      if (progressRef.current >= 1) {
+        onCompleteRef.current?.()
+        phaseRef.current = 'fade-out'
+        startTimeRef.current = performance.now()
+      }
+    } else if (phaseRef.current === 'fade-out') {
+      progressRef.current = Math.max(0, 1 - elapsed / halfDuration)
+      if (progressRef.current <= 0) {
+        phaseRef.current = 'idle'
+      }
+    }
+
+    material.opacity = progressRef.current
     mesh.visible = progressRef.current > 0.001
 
-    // Keep quad in front of camera
+    // Track camera
     mesh.position.copy(camera.position)
     mesh.quaternion.copy(camera.quaternion)
-    mesh.translateZ(-0.1) // Just in front of near plane
+    mesh.translateZ(-0.1)
   })
 
-  return (
-    <mesh ref={meshRef} renderOrder={9999} visible={false}>
-      <planeGeometry args={[10, 10]} />
-      <meshBasicMaterial
-        color={color}
-        transparent
-        opacity={0}
-        depthTest={false}
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
-  )
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      geometry.dispose()
+      material.dispose()
+    }
+  }, [geometry, material])
+
+  return <mesh ref={meshRef} geometry={geometry} material={material} renderOrder={9999} visible={false} />
 }

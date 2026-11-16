@@ -36,7 +36,8 @@ export function useAmbientAudio(src: string, options?: AmbientAudioOptions) {
     audioRef.current = audio
     gainRef.current = gain
 
-    audio.addEventListener('ended', () => setIsPlaying(false))
+    const handleEnded = () => setIsPlaying(false)
+    audio.addEventListener('ended', handleEnded)
 
     if (autoplay) {
       resumeAudioContext().then(() => {
@@ -46,6 +47,7 @@ export function useAmbientAudio(src: string, options?: AmbientAudioOptions) {
     }
 
     return () => {
+      audio.removeEventListener('ended', handleEnded)
       audio.pause()
       audio.src = ''
       source.disconnect()
