@@ -1,51 +1,43 @@
 {
   "name": "@allem-xr/core",
   "version": "0.1.0",
-  "description": "XR session management, context provider, and mode detection for React.",
-  "license": "MIT",
-  "author": "Ahmed Allem",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "description": "Core XR session management and React context for Allem XR",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
-  "files": [
-    "dist"
-  ],
-  "sideEffects": false,
+  "files": ["dist"],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "tsc --noEmit",
     "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "@react-three/fiber": ">=8.0.0",
+    "three": ">=0.160.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
+    "@types/three": "^0.170.0",
     "react": "^19.0.0",
-    "tsup": "^8.4.0",
+    "three": "^0.170.0",
+    "@react-three/fiber": "^9.0.0",
+    "tsup": "^8.0.0",
     "typescript": "^5.8.0"
   },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  },
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kingofmit/allem-xr.git",
+    "url": "https://github.com/AlemProject/allem-xr.git",
     "directory": "packages/core"
-  },
-  "keywords": [
-    "allem-xr",
-    "react",
-    "webxr",
-    "mixed-reality",
-    "xr-session",
-    "typescript"
-  ],
-  "publishConfig": {
-    "access": "public"
   }
 }

@@ -1,6 +1,18 @@
-export { useHands } from "./hooks/useHands";
-export { useGesture } from "./hooks/useGesture";
-export { usePinch } from "./hooks/usePinch";
-export { useGrab } from "./hooks/useGrab";
+// Hooks
+export { useHands, JOINT_NAMES } from './hooks/useHands'
+export { useGesture } from './hooks/useGesture'
 
-export type { Hand, Joint, Vector3, Gesture, PinchState, GrabState, HandsState } from "./types";
+// Components
+export { HandModel } from './components/HandModel'
+
+// Types
+export type {
+  XRHandJointName,
+  JointState,
+  HandState,
+  HandsState,
+  GestureName,
+  GestureState,
+  GestureOptions,
+  HandModelProps,
+} from './types'

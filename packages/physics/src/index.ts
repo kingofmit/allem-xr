@@ -1,16 +1,24 @@
-export { usePhysicsWorld } from "./hooks/usePhysicsWorld";
-export { useCollision } from "./hooks/useCollision";
-export { useGravity } from "./hooks/useGravity";
-export { RigidBody } from "./components/RigidBody";
+// Components
+export { PhysicsWorld } from './components/PhysicsWorld'
+export { RigidBody } from './components/RigidBody'
+export { RealWorldCollider } from './components/RealWorldCollider'
 
+// Hooks
+export { useCollision } from './hooks/useCollision'
+export { useHandPhysics } from './hooks/useHandPhysics'
+export { useGravity } from './hooks/useGravity'
+
+// Context
+export { PhysicsContext, usePhysicsContext } from './context'
+
+// Types
 export type {
-  Vector3,
-  Quaternion,
   RigidBodyType,
   ColliderShape,
   PhysicsWorldConfig,
-  PhysicsWorldState,
+  PhysicsContextValue,
+  RigidBodyProps,
   CollisionEvent,
+  RealWorldColliderProps,
   GravityState,
-} from "./types";
-export type { RigidBodyProps } from "./components/RigidBody";
+} from './types'

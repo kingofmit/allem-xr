@@ -1,46 +1,59 @@
-/** 3D position vector. */
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
+import type { Vector3 as ThreeVector3, Quaternion as ThreeQuaternion } from 'three'
+
+/** All 25 XR hand joint names */
+export type XRHandJointName =
+  | 'wrist'
+  | 'thumb-metacarpal' | 'thumb-phalanx-proximal' | 'thumb-phalanx-distal' | 'thumb-tip'
+  | 'index-finger-metacarpal' | 'index-finger-phalanx-proximal' | 'index-finger-phalanx-intermediate' | 'index-finger-phalanx-distal' | 'index-finger-tip'
+  | 'middle-finger-metacarpal' | 'middle-finger-phalanx-proximal' | 'middle-finger-phalanx-intermediate' | 'middle-finger-phalanx-distal' | 'middle-finger-tip'
+  | 'ring-finger-metacarpal' | 'ring-finger-phalanx-proximal' | 'ring-finger-phalanx-intermediate' | 'ring-finger-phalanx-distal' | 'ring-finger-tip'
+  | 'pinky-finger-metacarpal' | 'pinky-finger-phalanx-proximal' | 'pinky-finger-phalanx-intermediate' | 'pinky-finger-phalanx-distal' | 'pinky-finger-tip'
+
+export interface JointState {
+  position: ThreeVector3
+  rotation: ThreeQuaternion
+  radius: number
 }
 
-/** A single hand joint with position and radius. */
-export interface Joint {
-  name: string;
-  position: Vector3;
-  radius: number;
+export interface HandState {
+  /** Whether this hand is currently tracked/visible */
+  visible: boolean
+  /** Joint data -- updated every frame */
+  joints: Map<XRHandJointName, JointState>
+  /** Raw XRHand object */
+  raw: XRHand | null
 }
 
-/** Hand data with joints and handedness. */
-export interface Hand {
-  handedness: "left" | "right";
-  joints: Joint[];
-  visible: boolean;
-}
-
-/** Recognized gesture. */
-export interface Gesture {
-  name: string;
-  confidence: number;
-  hand: "left" | "right";
-}
-
-/** Pinch state for a single hand. */
-export interface PinchState {
-  isPinching: boolean;
-  distance: number;
-  position: Vector3 | null;
-}
-
-/** Grab state for a single hand. */
-export interface GrabState {
-  isGrabbing: boolean;
-  strength: number;
-}
-
-/** Return type for useHands. */
 export interface HandsState {
-  left: Hand | null;
-  right: Hand | null;
+  left: HandState | null
+  right: HandState | null
+}
+
+export type GestureName = 'pinch' | 'grab' | 'point' | 'fist' | 'open-palm'
+
+export interface GestureState {
+  /** Whether the gesture is currently active */
+  active: boolean
+  /** Confidence 0-1 */
+  confidence: number
+  /** For pinch: the pinch point position. For point: the pointing direction origin. */
+  position: ThreeVector3 | null
+  /** For pinch: distance between fingers. For grab: grip strength 0-1. */
+  value: number
+}
+
+export interface GestureOptions {
+  hand?: 'left' | 'right'
+  /** Activation threshold (meaning depends on gesture type) */
+  threshold?: number
+}
+
+export interface HandModelProps {
+  hand: 'left' | 'right'
+  /** Visual style */
+  model?: 'skeleton' | 'abstract' | 'spheres'
+  color?: string
+  opacity?: number
+  jointSize?: number
+  boneWidth?: number
 }

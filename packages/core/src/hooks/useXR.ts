@@ -1,23 +1,18 @@
-"use client";
+'use client'
 
-import { useContext } from "react";
-import { XRContext } from "../XRProvider";
-import type { XRContextValue } from "../types";
+import { useXRContext } from '../context'
+import type { XRState, XRActions } from '../types'
 
 /**
- * Access the current XR session state, mode, and presentation status.
- *
- * Must be used within an `<XRProvider>`.
- *
- * @example
- * ```tsx
- * const { isPresenting, mode, isSupported } = useXR();
- * ```
+ * Access XR session state and actions.
+ * Returns reactive state — safe to use in render.
+ * For per-frame data, use useXRFrame instead.
  */
-export function useXR(): XRContextValue {
-  const context = useContext(XRContext);
-  if (!context) {
-    throw new Error("useXR must be used within an <XRProvider>");
+export function useXR(): XRState & XRActions {
+  const ctx = useXRContext()
+  return {
+    ...ctx.state,
+    start: ctx.start,
+    end: ctx.end,
   }
-  return context;
 }
