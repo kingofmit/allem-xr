@@ -1,15 +1,20 @@
-export { useAvatar } from "./hooks/useAvatar";
-export { useIK } from "./hooks/useIK";
-export { AvatarRenderer } from "./components/AvatarRenderer";
+// Hooks
+export { useAvatar } from './hooks/useAvatar'
+export { useAvatarTracking } from './hooks/useAvatarTracking'
+export { useIK } from './hooks/useIK'
 
+// Components
+export { Avatar } from './components/Avatar'
+export { AvatarMirror } from './components/AvatarMirror'
+
+// Types
 export type {
-  Vector3,
-  Quaternion,
-  Bone,
-  Skeleton,
+  IKEffector,
   IKTarget,
+  IKChain,
+  IKState,
   AvatarConfig,
   AvatarState,
-  IKState,
-} from "./types";
-export type { AvatarRendererProps } from "./components/AvatarRenderer";
+  AvatarProps,
+  AvatarMirrorProps,
+} from './types'

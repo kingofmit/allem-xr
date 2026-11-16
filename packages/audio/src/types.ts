@@ -1,40 +1,60 @@
-/** 3D position vector. */
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
+import type { Vector3 } from 'three'
 
-/** Configuration for spatial audio playback. */
 export interface SpatialAudioConfig {
-  /** Position of the audio source in 3D space. */
-  position?: Vector3;
-  /** Maximum distance at which the sound is audible (meters). */
-  maxDistance?: number;
-  /** Rolloff factor for distance attenuation. */
-  rolloffFactor?: number;
-  /** Whether to loop the audio. */
-  loop?: boolean;
-  /** Initial volume (0-1). */
-  volume?: number;
+  position?: [number, number, number]
+  maxDistance?: number
+  rolloffFactor?: number
+  refDistance?: number
+  coneInnerAngle?: number
+  coneOuterAngle?: number
+  coneOuterGain?: number
+  loop?: boolean
+  volume?: number
+  autoplay?: boolean
+  hrtf?: boolean
 }
 
-/** Return type for useSpatialAudio. */
 export interface SpatialAudioState {
-  play: () => void;
-  pause: () => void;
-  stop: () => void;
-  setPosition: (position: Vector3) => void;
-  setVolume: (volume: number) => void;
-  isPlaying: boolean;
+  play: () => void
+  pause: () => void
+  stop: () => void
+  seek: (time: number) => void
+  setPosition: (x: number, y: number, z: number) => void
+  setVolume: (volume: number) => void
+  isPlaying: boolean
+  currentTime: number
+  duration: number
 }
 
-/** Return type for useHRTF. */
-export interface HRTFState {
-  /** Whether HRTF is available and active. */
-  isActive: boolean;
-  /** Set the listener position (usually the camera/head). */
-  setListenerPosition: (position: Vector3) => void;
-  /** Set the listener orientation. */
-  setListenerOrientation: (forward: Vector3, up: Vector3) => void;
+export interface AudioListenerState {
+  setPosition: (x: number, y: number, z: number) => void
+  setOrientation: (fx: number, fy: number, fz: number, ux: number, uy: number, uz: number) => void
+}
+
+export interface SpatialAudioSourceProps {
+  src: string
+  position?: [number, number, number]
+  maxDistance?: number
+  rolloffFactor?: number
+  refDistance?: number
+  loop?: boolean
+  volume?: number
+  autoplay?: boolean
+  hrtf?: boolean
+}
+
+export interface AudioZoneProps {
+  children?: React.ReactNode
+  position?: [number, number, number]
+  radius?: number
+  volume?: number
+  reverb?: 'none' | 'small-room' | 'hall' | 'cave' | 'outdoor'
+  dampening?: number
+}
+
+export interface AmbientAudioProps {
+  src: string
+  volume?: number
+  loop?: boolean
+  autoplay?: boolean
 }

@@ -1,6 +1,22 @@
-export { useSpatialAudio } from "./hooks/useSpatialAudio";
-export { useHRTF } from "./hooks/useHRTF";
-export { AudioZone } from "./components/AudioZone";
+// Hooks
+export { useSpatialAudio } from './hooks/useSpatialAudio'
+export { useAudioListener } from './hooks/useAudioListener'
+export { useAmbientAudio } from './hooks/useAmbientAudio'
 
-export type { Vector3, SpatialAudioConfig, SpatialAudioState, HRTFState } from "./types";
-export type { AudioZoneProps } from "./components/AudioZone";
+// Components
+export { SpatialAudioSource } from './components/SpatialAudioSource'
+export { AudioZone } from './components/AudioZone'
+export { AmbientAudio } from './components/AmbientAudio'
+
+// Utilities
+export { getAudioContext, resumeAudioContext } from './audioContext'
+
+// Types
+export type {
+  SpatialAudioConfig,
+  SpatialAudioState,
+  AudioListenerState,
+  SpatialAudioSourceProps,
+  AudioZoneProps,
+  AmbientAudioProps,
+} from './types'
