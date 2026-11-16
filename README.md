@@ -6,66 +6,235 @@
   <a href="https://doi.org/10.5281/zenodo.24243178"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.24243178.svg" alt="DOI" /></a>
   <a href="https://www.npmjs.com/package/@allem-xr/core"><img src="https://img.shields.io/npm/v/@allem-xr/core.svg" alt="npm version" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
-  <img src="https://img.shields.io/badge/react-19-61dafb" alt="React 19" />
+  <img src="https://img.shields.io/badge/react-18%20%7C%2019-61dafb" alt="React" />
   <img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript" />
   <img src="https://img.shields.io/badge/WebXR-ready-blueviolet" alt="WebXR" />
 </p>
 
-The React SDK for Mixed Reality — hand tracking, spatial UI, and immersive experiences. One install, zero lock-in.
+<p align="center">
+  <strong>The React SDK for Mixed Reality</strong><br/>
+  Build XR apps as easily as you build web apps.
+</p>
+
+---
+
+## What is Allem XR?
+
+Allem XR is a modular React SDK for building mixed reality experiences on the web. It wraps the WebXR Device API into ergonomic React hooks and components built on [React Three Fiber](https://github.com/pmndrs/react-three-fiber), so you can build immersive VR and AR apps with the tools you already know.
+
+**8 focused packages.** Import only what you need. Hand tracking without physics. Spatial UI without avatars. Your bundle stays small.
+
+```bash
+npx create-allem-xr my-app
+```
+
+## The Simplest XR App
+
+```tsx
+import { XRProvider, XRScene, XROrigin } from '@allem-xr/core'
+import { HandModel } from '@allem-xr/hands'
+import { Canvas } from '@react-three/fiber'
+
+function App() {
+  return (
+    <XRProvider features={['hand-tracking']}>
+      <Canvas>
+        <XRScene>
+          <XROrigin />
+          <HandModel hand="left" color="#00ffaa" />
+          <HandModel hand="right" color="#00aaff" />
+          <mesh position={[0, 1.5, -1]}>
+            <boxGeometry args={[0.2, 0.2, 0.2]} />
+            <meshStandardMaterial color="hotpink" />
+          </mesh>
+          <ambientLight />
+        </XRScene>
+      </Canvas>
+    </XRProvider>
+  )
+}
+```
+
+That's it. Session management, hand tracking, and 3D rendering — no boilerplate.
+
+## Features
+
+### Hand Tracking & Gestures
+25-joint hand tracking with built-in gesture detection. Pinch, grab, point, fist, open-palm — or define your own.
+
+```tsx
+import { useGesture } from '@allem-xr/hands'
+
+const pinch = useGesture('pinch', { hand: 'right' })
+// → { active: true, confidence: 0.95, position: Vector3 }
+```
+
+### Spatial Understanding
+Hit testing, plane detection, persistent spatial anchors, scene mesh, depth sensing, and light estimation.
+
+```tsx
+import { usePlanes, useHitTest } from '@allem-xr/spatial'
+
+const { planes } = usePlanes({ filter: 'horizontal' })
+const { results } = useHitTest({ source: 'viewer' })
+```
+
+### Spatial UI
+Panels, buttons, sliders, toggles, and more — rendered as Three.js geometry. Works in VR, AR, and on desktop.
+
+```tsx
+import { Panel, Button, Text, Slider } from '@allem-xr/ui'
+
+<Panel position={[0, 1.5, -1]} followGaze>
+  <Text fontSize={0.03}>Settings</Text>
+  <Slider value={volume} onChange={setVolume} label="Volume" />
+  <Button onSelect={save}>Save</Button>
+</Panel>
+```
+
+### Physics with Real-World Colliders
+Rapier WASM physics that interacts with detected real-world surfaces. Throw virtual objects and watch them bounce off your real table.
+
+```tsx
+import { PhysicsWorld, RigidBody, RealWorldCollider } from '@allem-xr/physics'
+
+<PhysicsWorld>
+  <RealWorldCollider source="planes" planes={detectedPlanes} />
+  <RigidBody type="dynamic" collider="ball" args={[0.05]}>
+    <mesh><sphereGeometry /><meshStandardMaterial /></mesh>
+  </RigidBody>
+</PhysicsWorld>
+```
+
+### Spatial Audio
+HRTF-based positional audio with automatic listener sync to the XR head pose.
+
+```tsx
+import { SpatialAudioSource, useAudioListener } from '@allem-xr/audio'
+
+useAudioListener() // syncs to camera
+<SpatialAudioSource src="/waterfall.mp3" position={[5, 0, -3]} autoplay loop />
+```
+
+### Avatars & IK
+Load GLB/VRM models, drive them with XR tracking, and see yourself in a mirror.
+
+```tsx
+import { Avatar } from '@allem-xr/avatars'
+
+<Avatar model="/character.vrm" trackHead trackHands estimateBody />
+```
+
+### Portals & Transitions
+Walk through a portal into a virtual world. Stencil-buffer rendering creates the "window into another reality" effect.
+
+```tsx
+import { Portal, Guardian } from '@allem-xr/portals'
+
+<Portal position={[0, 0, -2]} size={[1.5, 2]}>
+  <VirtualRoom />
+</Portal>
+<Guardian radius={2} fadeDistance={0.5} />
+```
 
 ## Packages
 
-| Package | Description | npm |
-|---------|-------------|-----|
-| `@allem-xr/core` | XR session management, context provider, mode detection | [![npm](https://img.shields.io/npm/v/@allem-xr/core.svg)](https://www.npmjs.com/package/@allem-xr/core) |
-| `@allem-xr/hands` | Hand tracking, gesture recognition, pinch & grab detection | [![npm](https://img.shields.io/npm/v/@allem-xr/hands.svg)](https://www.npmjs.com/package/@allem-xr/hands) |
-| `@allem-xr/spatial` | Spatial anchors, hit testing, plane detection, scene mesh | [![npm](https://img.shields.io/npm/v/@allem-xr/spatial.svg)](https://www.npmjs.com/package/@allem-xr/spatial) |
-| `@allem-xr/ui` | Spatial panels, buttons, menus, and gaze pointer | [![npm](https://img.shields.io/npm/v/@allem-xr/ui.svg)](https://www.npmjs.com/package/@allem-xr/ui) |
-| `@allem-xr/audio` | Spatial audio, audio zones, HRTF rendering | [![npm](https://img.shields.io/npm/v/@allem-xr/audio.svg)](https://www.npmjs.com/package/@allem-xr/audio) |
-| `@allem-xr/physics` | Physics world, rigid bodies, collisions, gravity | [![npm](https://img.shields.io/npm/v/@allem-xr/physics.svg)](https://www.npmjs.com/package/@allem-xr/physics) |
-| `@allem-xr/avatars` | Avatar rendering, inverse kinematics, skeleton tracking | [![npm](https://img.shields.io/npm/v/@allem-xr/avatars.svg)](https://www.npmjs.com/package/@allem-xr/avatars) |
-| `@allem-xr/portals` | AR passthrough portals, scene transitions, boundaries | [![npm](https://img.shields.io/npm/v/@allem-xr/portals.svg)](https://www.npmjs.com/package/@allem-xr/portals) |
+| Package | What it does |
+|---------|-------------|
+| [`@allem-xr/core`](./packages/core) | Session management, input abstraction, capability detection |
+| [`@allem-xr/hands`](./packages/hands) | 25-joint hand tracking, gestures, pinch/grab interaction |
+| [`@allem-xr/spatial`](./packages/spatial) | Hit testing, planes, anchors, scene mesh, depth, lighting |
+| [`@allem-xr/ui`](./packages/ui) | Panels, buttons, sliders, toggles, text — all in 3D |
+| [`@allem-xr/physics`](./packages/physics) | Rapier WASM physics, rigid bodies, real-world colliders |
+| [`@allem-xr/audio`](./packages/audio) | HRTF spatial audio, ambient audio, listener sync |
+| [`@allem-xr/avatars`](./packages/avatars) | GLB/VRM loading, IK solver, XR-driven avatar tracking |
+| [`@allem-xr/portals`](./packages/portals) | Stencil portals, scene transitions, guardian boundaries |
+
+## Why Allem XR?
+
+| | Allem XR | @react-three/xr | A-Frame | Raw WebXR |
+|---|---|---|---|---|
+| **React-native** | hooks + JSX | hooks + JSX | HTML custom elements | imperative |
+| **Modular** | 8 packages, import what you need | monolith | monolith | N/A |
+| **Hand tracking** | 25-joint + 5 gestures + custom | basic input sources | community component | manual |
+| **Spatial UI** | Panel, Button, Slider, Toggle... | none built-in | basic panels | manual |
+| **Physics** | Rapier + real-world colliders | none (use rapier separately) | community component | manual |
+| **Spatial audio** | HRTF + listener sync | none | basic | manual |
+| **Avatars + IK** | GLB/VRM + FABRIK + body estimation | none | community component | manual |
+| **Portals** | stencil-buffer rendering | none | none | manual |
+| **Error messages** | contextual with device support | raw browser errors | generic | raw |
+| **TypeScript** | strict, full inference | yes | no | N/A |
+| **CLI scaffolding** | `npx create-allem-xr` | none | none | none |
 
 ## Quick Start
+
+### Option 1: Scaffold a new project
+
+```bash
+npx create-allem-xr my-app
+cd my-app
+npm install
+npm run dev
+```
+
+Opens a working XR app with hand tracking, HTTPS dev server, and hot reload.
+
+### Option 2: Add to an existing R3F project
 
 ```bash
 npm install @allem-xr/core @allem-xr/hands
 ```
 
 ```tsx
-import { XRProvider, useXR } from "@allem-xr/core";
-import { useHands } from "@allem-xr/hands";
+import { XRProvider, XRScene } from '@allem-xr/core'
 
-function Scene() {
-  const { isPresenting, mode } = useXR();
-  const { left, right } = useHands();
-
-  return (
-    <div>
-      <p>Mode: {mode}</p>
-      <p>Left hand joints: {left?.joints.length ?? 0}</p>
-      <p>Right hand joints: {right?.joints.length ?? 0}</p>
-    </div>
-  );
-}
-
-function App() {
-  return (
-    <XRProvider>
-      <Scene />
-    </XRProvider>
-  );
-}
+// Wrap your existing Canvas:
+<XRProvider>
+  <Canvas>
+    <XRScene>
+      {/* your existing R3F scene */}
+    </XRScene>
+  </Canvas>
+</XRProvider>
 ```
 
-## Tech Stack
+## Device Support
 
-- [React 19](https://react.dev/) with `"use client"` directives
-- [WebXR Device API](https://www.w3.org/TR/webxr/) for immersive sessions
-- [TypeScript](https://www.typescriptlang.org/) (strict mode)
-- [Turborepo](https://turbo.build/) + [pnpm](https://pnpm.io/) workspaces
-- [tsup](https://tsup.egoist.dev/) (ESM + CJS builds)
-- [Changesets](https://github.com/changesets/changesets) for versioning
+| Device | VR | AR | Hands | Planes | Anchors |
+|--------|----|----|-------|--------|---------|
+| Meta Quest 2/3/Pro | yes | yes | yes | yes | yes (persistent) |
+| Apple Vision Pro | yes | — | gaze+pinch | — | — |
+| Android (Chrome) | yes | yes | — | partial | partial |
+| Desktop (emulator) | yes | yes | emulated | emulated | emulated |
+
+## Architecture
+
+```
+Your App
+  └─ @allem-xr packages (hooks + components)
+       └─ React Three Fiber (reconciler)
+            └─ Three.js (scene graph + rendering)
+                 └─ WebXR Device API + WebGPU/WebGL2
+```
+
+- **Frame-loop native**: Per-frame data (poses, joints) lives in refs. React only re-renders for session-level changes.
+- **Capability-detected**: Every hook returns `{ supported: false }` gracefully when features aren't available.
+- **Peer dependencies**: R3F, Three.js, and React are peer deps. You control the versions.
+- **SSR-safe**: All packages use `"use client"` directives.
+
+## Demo Apps
+
+The repo includes working demo apps in `apps/`:
+
+- **[Physics Playground](./apps/physics-playground)** — Spawn balls and boxes, real-world plane colliders, hand physics
+- **[Spatial Notes](./apps/spatial-notes)** — Place sticky notes on real surfaces with pinch gestures
+
+Run a demo:
+
+```bash
+pnpm install
+pnpm --filter physics-playground dev
+```
 
 ## Development
 
@@ -73,10 +242,23 @@ function App() {
 git clone https://github.com/kingofmit/allem-xr.git
 cd allem-xr
 pnpm install
-pnpm build
+pnpm build        # build all packages
+pnpm dev          # watch mode
 ```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed contribution guidelines.
+
+## Tech Stack
+
+- [React 18/19](https://react.dev/) with `"use client"` directives
+- [React Three Fiber](https://github.com/pmndrs/react-three-fiber) for the React-to-Three.js bridge
+- [Three.js](https://threejs.org/) for 3D rendering
+- [WebXR Device API](https://www.w3.org/TR/webxr/) (Candidate Recommendation)
+- [Rapier](https://rapier.rs/) WASM physics engine
+- [Troika](https://github.com/protectwise/troika) for SDF text rendering
+- [TypeScript](https://www.typescriptlang.org/) (strict mode)
+- [Turborepo](https://turbo.build/) + [pnpm](https://pnpm.io/) workspaces
+- [tsup](https://tsup.egoist.dev/) (ESM + CJS + DTS)
 
 ## Support
 

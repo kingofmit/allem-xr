@@ -104,34 +104,40 @@ export function useHitTest(options?: HitTestOptions): HitTestState {
     if (!hitTestSource) return
 
     const rawResults = frame.getHitTestResults(hitTestSource)
-    const newResults: HitTestResult[] = []
+    let resultCount = 0
 
     for (const result of rawResults) {
       const pose = result.getPose(referenceSpace)
       if (pose) {
-        newResults.push({
-          position: new Vector3(
-            pose.transform.position.x,
-            pose.transform.position.y,
-            pose.transform.position.z
-          ),
-          rotation: new Quaternion(
-            pose.transform.orientation.x,
-            pose.transform.orientation.y,
-            pose.transform.orientation.z,
-            pose.transform.orientation.w
-          ),
-        })
+        // Reuse existing result objects to avoid per-frame allocations
+        let entry: HitTestResult
+        if (resultCount < resultsRef.current.length) {
+          entry = resultsRef.current[resultCount]
+        } else {
+          entry = { position: new Vector3(), rotation: new Quaternion() }
+          resultsRef.current.push(entry)
+        }
+        entry.position.set(
+          pose.transform.position.x,
+          pose.transform.position.y,
+          pose.transform.position.z
+        )
+        entry.rotation.set(
+          pose.transform.orientation.x,
+          pose.transform.orientation.y,
+          pose.transform.orientation.z,
+          pose.transform.orientation.w
+        )
+        resultCount++
       }
     }
 
+    // Trim excess entries (no allocation — just shortens the array)
+    resultsRef.current.length = resultCount
+
     // Only update React state when result count changes
-    if (newResults.length !== resultsRef.current.length) {
-      resultsRef.current = newResults
-      setState({ supported: true, results: newResults })
-    } else {
-      // Update positions in place for frame-level consumers
-      resultsRef.current = newResults
+    if (resultCount !== (state.results?.length ?? 0)) {
+      setState({ supported: true, results: resultsRef.current })
     }
   })
 

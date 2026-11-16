@@ -41,10 +41,16 @@ export function UIProvider({ children }: UIProviderProps) {
     }
   }, [])
 
+  // Pre-allocated arrays for raycasting — avoids per-frame allocations
+  const meshesRef = useRef<THREE.Object3D[]>([])
+  const idMapRef = useRef<Map<THREE.Object3D, string>>(new Map())
+
   // Raycast from camera center each frame (works for gaze, mouse, and controller)
   useFrame(() => {
-    const meshes: THREE.Object3D[] = []
-    const idMap = new Map<THREE.Object3D, string>()
+    const meshes = meshesRef.current
+    const idMap = idMapRef.current
+    meshes.length = 0
+    idMap.clear()
 
     for (const [id, entry] of registryRef.current) {
       meshes.push(entry.mesh)

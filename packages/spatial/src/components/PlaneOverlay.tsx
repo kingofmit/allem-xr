@@ -65,12 +65,13 @@ export function PlaneOverlay({
   // Dispose all on unmount
   useEffect(() => {
     return () => {
+      material.dispose()
       for (const geo of prevGeometriesRef.current.values()) {
         geo.dispose()
       }
       prevGeometriesRef.current.clear()
     }
-  }, [])
+  }, [material])
 
   return (
     <>

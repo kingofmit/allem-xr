@@ -4,6 +4,9 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
+
+// Cached vector for worldToLocal conversion — avoids allocation per pointer move
+const _localPoint = new THREE.Vector3()
 import { SpatialText } from './SpatialText'
 import type { SliderProps } from '../types'
 
@@ -53,8 +56,9 @@ export function Slider({
 
   const handlePointerMove = useCallback((e: any) => {
     if (!dragging || !trackRef.current) return
-    // Get local X position on track
-    const localPoint = trackRef.current.worldToLocal(e.point.clone())
+    // Get local X position on track — reuse cached vector to avoid allocation
+    _localPoint.copy(e.point)
+    const localPoint = trackRef.current.worldToLocal(_localPoint)
     const normalized = Math.max(0, Math.min(1, (localPoint.x + width / 2) / width))
     let newValue = min + normalized * (max - min)
     // Snap to step

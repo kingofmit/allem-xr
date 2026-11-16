@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useMemo } from 'react'
+import React, { useRef, useMemo, useEffect } from 'react'
 import type { Group, Mesh, LineSegments } from 'three'
 import * as THREE from 'three'
 import { extend } from '@react-three/fiber'
@@ -87,6 +87,19 @@ export function HandModel({
     () => new THREE.SphereGeometry(jointSize, 8, 8),
     [jointSize]
   )
+
+  // Dispose materials and geometry on unmount
+  useEffect(() => {
+    return () => {
+      jointGeometry.dispose()
+      jointMaterial.dispose()
+      boneMaterial.dispose()
+      // Dispose dynamically created bone geometry
+      if (bonesRef.current) {
+        bonesRef.current.geometry.dispose()
+      }
+    }
+  }, [jointGeometry, jointMaterial, boneMaterial])
 
   // Per-frame update of joint positions
   useXRFrame((frame, _delta, referenceSpace) => {

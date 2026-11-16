@@ -7,6 +7,7 @@ import type { LightEstimateState } from '../types'
 
 // Cached to avoid frame-loop allocations
 const _dir = new Vector3()
+const _stateDir = new Vector3(0, -1, 0)
 
 /**
  * Access real-world light estimation.
@@ -55,9 +56,10 @@ export function useLightEstimate(): LightEstimateState {
     const intensityMag = Math.sqrt(intensity.x * intensity.x + intensity.y * intensity.y + intensity.z * intensity.z)
     if (Math.abs(intensityMag - prevIntensityRef.current) > 0.05) {
       prevIntensityRef.current = intensityMag
+      _stateDir.set(dir.x, dir.y, dir.z)
       setState({
         supported: true,
-        primaryDirection: new Vector3(dir.x, dir.y, dir.z),
+        primaryDirection: _stateDir,
         primaryIntensity: intensityMag,
         sphericalHarmonics: estimate.sphericalHarmonicsCoefficients
           ? new Float32Array(estimate.sphericalHarmonicsCoefficients)
