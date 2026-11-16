@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { useSceneMesh } from '../hooks/useSceneMesh'
 
@@ -19,6 +19,12 @@ export function SceneMeshOccluder() {
     }),
     []
   )
+
+  useEffect(() => {
+    return () => {
+      occluderMaterial.dispose()
+    }
+  }, [occluderMaterial])
 
   if (!supported || meshes.length === 0) return null
 

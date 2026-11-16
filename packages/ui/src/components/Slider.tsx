@@ -1,7 +1,7 @@
 'use client'
 
 
-import React, { useRef, useCallback, useState } from 'react'
+import React, { useRef, useCallback, useState, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { SpatialText } from './SpatialText'
@@ -27,6 +27,14 @@ export function Slider({
 }: SliderProps) {
   const trackRef = useRef<THREE.Mesh>(null)
   const [dragging, setDragging] = useState(false)
+
+  // Clean up drag state on unmount
+  useEffect(() => {
+    return () => {
+      setDragging(false)
+    }
+  }, [])
+
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
 

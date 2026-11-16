@@ -14,8 +14,11 @@ interface PinchInteractionOptions {
 const _thumbPos = new Vector3()
 const _indexPos = new Vector3()
 const _pinchPoint = new Vector3()
-const _prevPinchPoint = new Vector3()
+const _prevPinchPos = new Vector3()
 const _moveDelta = new Vector3()
+const _pinchOutPos = new Vector3()
+const _pinchOutDelta = new Vector3()
+const _meshWorldPos = new Vector3()
 
 const PINCH_THRESHOLD = 0.025
 
@@ -31,7 +34,7 @@ export function usePinchInteraction(
   const optionsRef = useRef(options)
   optionsRef.current = options
 
-  const pinchingRef = useRef<{ hand: 'left' | 'right'; prevPos: Vector3 } | null>(null)
+  const pinchingRef = useRef<{ hand: 'left' | 'right' } | null>(null)
 
   useXRFrame((frame, _delta, referenceSpace) => {
     const state = ctx.getFrameState()
@@ -61,19 +64,26 @@ export function usePinchInteraction(
       if (isPinching) {
         if (!pinchingRef.current || pinchingRef.current.hand !== hand) {
           // Pinch start — check if near the mesh
-          const meshPos = new Vector3()
-          mesh.getWorldPosition(meshPos)
-          const distToMesh = _pinchPoint.distanceTo(meshPos)
+          mesh.getWorldPosition(_meshWorldPos)
+          let interactionRadius = 0.15
+          if ((mesh as any).geometry?.boundingSphere) {
+            interactionRadius = Math.max(interactionRadius, (mesh as any).geometry.boundingSphere.radius * 1.5)
+          }
+          const distToMesh = _pinchPoint.distanceTo(_meshWorldPos)
 
-          if (distToMesh < 0.15) {
-            pinchingRef.current = { hand, prevPos: _pinchPoint.clone() }
-            optionsRef.current.onPinchStart?.(hand, _pinchPoint.clone())
+          if (distToMesh < interactionRadius) {
+            pinchingRef.current = { hand }
+            _prevPinchPos.copy(_pinchPoint)
+            _pinchOutPos.copy(_pinchPoint)
+            optionsRef.current.onPinchStart?.(hand, _pinchOutPos)
           }
         } else if (pinchingRef.current.hand === hand) {
           // Pinch move
-          _moveDelta.subVectors(_pinchPoint, pinchingRef.current.prevPos)
-          pinchingRef.current.prevPos.copy(_pinchPoint)
-          optionsRef.current.onPinchMove?.(hand, _pinchPoint.clone(), _moveDelta.clone())
+          _moveDelta.subVectors(_pinchPoint, _prevPinchPos)
+          _prevPinchPos.copy(_pinchPoint)
+          _pinchOutPos.copy(_pinchPoint)
+          _pinchOutDelta.copy(_moveDelta)
+          optionsRef.current.onPinchMove?.(hand, _pinchOutPos, _pinchOutDelta)
         }
       } else if (pinchingRef.current?.hand === hand) {
         // Pinch end

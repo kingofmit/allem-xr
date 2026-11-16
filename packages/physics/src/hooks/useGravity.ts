@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { usePhysicsContext } from '../context'
 import type { GravityState } from '../types'
 
@@ -11,10 +11,17 @@ export function useGravity(): GravityState {
   const { world, ready } = usePhysicsContext()
   const [gravity, setGravityState] = useState<[number, number, number]>([0, -9.81, 0])
 
-  const setGravity = useCallback((g: [number, number, number]) => {
+  // Sync initial gravity from world when ready
+  useEffect(() => {
     if (world && ready) {
-      world.gravity = { x: g[0], y: g[1], z: g[2] }
+      const g = world.gravity
+      setGravityState([g.x, g.y, g.z])
     }
+  }, [world, ready])
+
+  const setGravity = useCallback((g: [number, number, number]) => {
+    if (!world || !ready) return
+    world.gravity = { x: g[0], y: g[1], z: g[2] }
     setGravityState(g)
   }, [world, ready])
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Vector3, Quaternion, BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute } from 'three'
 import { useXRContext, useXRFrame } from '@allem-xr/core'
 import type { SceneMeshData, SceneMeshState } from '../types'
@@ -90,6 +90,16 @@ export function useSceneMesh(): SceneMeshState {
       })
     }
   })
+
+  // Cleanup all geometries on unmount
+  useEffect(() => {
+    return () => {
+      for (const data of meshMapRef.current.values()) {
+        data.geometry.dispose()
+      }
+      meshMapRef.current.clear()
+    }
+  }, [])
 
   return state
 }

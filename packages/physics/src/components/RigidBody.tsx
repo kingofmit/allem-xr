@@ -56,6 +56,7 @@ export function RigidBody({
     if (type === 'dynamic') {
       bodyDesc.setLinearDamping(linearDamping)
       bodyDesc.setAngularDamping(angularDamping)
+      bodyDesc.setAdditionalMass(mass)
       if (ccd) bodyDesc.setCcdEnabled(true)
     }
 
@@ -80,10 +81,14 @@ export function RigidBody({
         if (foundMesh) {
           const geo = (foundMesh as Mesh).geometry
           geo.computeBoundingBox()
-          const box = geo.boundingBox!
-          const size = new THREE.Vector3()
-          box.getSize(size)
-          colliderDesc = rapier.ColliderDesc.cuboid(size.x / 2, size.y / 2, size.z / 2)
+          const box = geo.boundingBox
+          if (!box) {
+            colliderDesc = rapier.ColliderDesc.cuboid(0.05, 0.05, 0.05)
+          } else {
+            const size = new THREE.Vector3()
+            box.getSize(size)
+            colliderDesc = rapier.ColliderDesc.cuboid(size.x / 2, size.y / 2, size.z / 2)
+          }
         } else {
           // Fallback: unit cube
           colliderDesc = rapier.ColliderDesc.cuboid(0.05, 0.05, 0.05)
@@ -104,34 +109,40 @@ export function RigidBody({
     if (colliderDesc) {
       colliderDesc.setRestitution(restitution)
       colliderDesc.setFriction(friction)
-      if (type === 'dynamic') {
-        colliderDesc.setMass(mass)
-      }
+      // Mass is set on the body descriptor via setAdditionalMass
       world.createCollider(colliderDesc, body)
     }
 
     return () => {
       unregisterBody(bodyId)
-      if (world.bodies.contains(body.handle)) {
-        world.removeRigidBody(body)
+      try {
+        if (world && world.bodies && world.bodies.contains(body.handle)) {
+          world.removeRigidBody(body)
+        }
+      } catch {
+        // World may already be freed
       }
     }
   }, [world, rapier, ready]) // Only create once when physics is ready
 
   // Sync Three.js transform from physics each frame
   useFrame(() => {
-    if (!world || !ready || bodyHandleRef.current === null) return
-    const group = groupRef.current
-    if (!group) return
+    try {
+      if (!world || !ready || bodyHandleRef.current === null) return
+      const group = groupRef.current
+      if (!group) return
 
-    const body = world.bodies.get(bodyHandleRef.current)
-    if (!body) return
+      const body = world.bodies.get(bodyHandleRef.current)
+      if (!body) return
 
-    if (type === 'dynamic' || type === 'kinematic-position' || type === 'kinematic-velocity') {
-      const pos = body.translation()
-      const rot = body.rotation()
-      group.position.set(pos.x, pos.y, pos.z)
-      group.quaternion.set(rot.x, rot.y, rot.z, rot.w)
+      if (type === 'dynamic' || type === 'kinematic-position' || type === 'kinematic-velocity') {
+        const pos = body.translation()
+        const rot = body.rotation()
+        group.position.set(pos.x, pos.y, pos.z)
+        group.quaternion.set(rot.x, rot.y, rot.z, rot.w)
+      }
+    } catch {
+      // World may have been freed during unmount
     }
   })
 

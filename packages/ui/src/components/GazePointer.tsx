@@ -6,6 +6,8 @@ import { useFrame, useThree } from '@react-three/fiber'
 import type { Group } from 'three'
 import type { GazePointerProps } from '../types'
 
+const _gazeDir = new THREE.Vector3()
+
 /**
  * A gaze cursor that follows the camera's forward direction.
  * Shows a ring at a fixed distance from the camera.
@@ -22,8 +24,8 @@ export function GazePointer({
   useFrame(() => {
     if (!groupRef.current) return
     // Position pointer at camera forward direction
-    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
-    groupRef.current.position.copy(camera.position).addScaledVector(dir, distance)
+    _gazeDir.set(0, 0, -1).applyQuaternion(camera.quaternion)
+    groupRef.current.position.copy(camera.position).addScaledVector(_gazeDir, distance)
     groupRef.current.lookAt(camera.position)
   })
 

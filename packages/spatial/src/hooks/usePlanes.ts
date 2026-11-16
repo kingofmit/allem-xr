@@ -2,6 +2,9 @@
 
 import { useRef, useState } from 'react'
 import { Vector3, Quaternion } from 'three'
+
+// Cached vector to avoid per-change allocations in label inference
+const _up = new Vector3()
 import { useXRContext, useXRFrame } from '@allem-xr/core'
 import type { DetectedPlane, PlaneDetectionState, PlaneDetectionOptions, PlaneLabel } from '../types'
 
@@ -87,7 +90,8 @@ export function usePlanes(options?: PlaneDetectionOptions): PlaneDetectionState 
         label = (xrPlane as any).semanticLabel as PlaneLabel
       } else {
         // Infer from normal direction (plane's local Y axis in world space)
-        const up = new Vector3(0, 1, 0).applyQuaternion(rotation)
+        _up.set(0, 1, 0).applyQuaternion(rotation)
+        const up = _up
         if (Math.abs(up.y) > 0.8) {
           label = position.y < 0.3 ? 'floor' : position.y > 2.0 ? 'ceiling' : 'table'
         } else {

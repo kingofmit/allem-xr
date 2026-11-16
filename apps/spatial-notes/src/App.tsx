@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Text } from '@react-three/drei'
 import { XRProvider, XRScene, XROrigin, useXRSession, useXRSupport } from '@allem-xr/core'
@@ -83,23 +83,27 @@ function NoteCreator({ onCreateNote }: { onCreateNote: (note: StickyNote) => voi
   const pinch = useGesture('pinch', { hand: 'right' })
   const prevPinchRef = useRef(false)
   const noteCountRef = useRef(0)
+  const onCreateNoteRef = useRef(onCreateNote)
+  onCreateNoteRef.current = onCreateNote
 
   // Detect pinch start → create note at hit test position
-  if (pinch.active && !prevPinchRef.current && results.length > 0) {
-    const hit = results[0]
-    const id = `note-${noteCountRef.current++}`
-    const color = NOTE_COLORS[noteCountRef.current % NOTE_COLORS.length]
-    const text = NOTE_TEXTS[noteCountRef.current % NOTE_TEXTS.length]
+  useEffect(() => {
+    if (pinch.active && !prevPinchRef.current && results.length > 0) {
+      const hit = results[0]
+      const id = `note-${noteCountRef.current++}`
+      const color = NOTE_COLORS[noteCountRef.current % NOTE_COLORS.length]
+      const text = NOTE_TEXTS[noteCountRef.current % NOTE_TEXTS.length]
 
-    onCreateNote({
-      id,
-      position: [hit.position.x, hit.position.y, hit.position.z],
-      rotation: [hit.rotation.x, hit.rotation.y, hit.rotation.z, hit.rotation.w],
-      color,
-      text,
-    })
-  }
-  prevPinchRef.current = pinch.active
+      onCreateNoteRef.current({
+        id,
+        position: [hit.position.x, hit.position.y, hit.position.z],
+        rotation: [hit.rotation.x, hit.rotation.y, hit.rotation.z, hit.rotation.w],
+        color,
+        text,
+      })
+    }
+    prevPinchRef.current = pinch.active
+  }, [pinch.active, results])
 
   return null
 }
