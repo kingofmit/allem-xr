@@ -240,14 +240,29 @@ Your App
 
 ## Demo Apps
 
-The repo includes 6 working demo apps in `apps/`:
+The repo includes 9 demo apps in `apps/` — from tech demos to premium experiences:
 
-| Demo | Showcases | Description |
-|------|-----------|-------------|
-| **[Physics Playground](./apps/physics-playground)** | physics, spatial, hands | Spawn balls and boxes that bounce off real surfaces |
-| **[Spatial Notes](./apps/spatial-notes)** | spatial, hands | Place sticky notes on real surfaces with pinch gestures |
+### Flagship
+
+| Demo | Packages | Description |
+|------|----------|-------------|
+| **[Mixed Reality Playground](./apps/mixed-reality-playground)** | all 8 | Portal to an ethereal world, glass physics objects, spatial UI control panel, hand tracking, guardian boundary — the full SDK in one scene |
+
+### Premium Experiences
+
+| Demo | Packages | Description |
+|------|----------|-------------|
+| **[Zen Garden](./apps/zen-garden)** | core, hands, ui, audio, portals | VR meditation — reflective water pool, river stones, cherry blossoms, fireflies, bamboo, breathing guide |
+| **[Spatial Analytics](./apps/spatial-analytics)** | core, hands, ui | Enterprise dashboard — animated 3D bar charts, KPI ring charts, floating metric orbs, glass panels |
+
+### Feature Demos
+
+| Demo | Packages | Description |
+|------|----------|-------------|
+| **[Physics Playground](./apps/physics-playground)** | physics, spatial, hands | Spawn objects that bounce off real surfaces with hand physics |
+| **[Spatial Notes](./apps/spatial-notes)** | spatial, hands | Pinch to place sticky notes on real-world surfaces |
 | **[Portal Gallery](./apps/portal-gallery)** | portals, hands | Walk through portals into forest, ocean, and space worlds |
-| **[Avatar Mirror](./apps/avatar-mirror)** | avatars, hands, audio | See yourself in a VR mirror with hand-tracked avatar |
+| **[Avatar Mirror](./apps/avatar-mirror)** | avatars, hands, audio | VR room with real-time mirror reflection |
 | **[Spatial Dashboard](./apps/spatial-dashboard)** | ui, hands | Floating panels with sliders, toggles, buttons, progress bars |
 | **[Gesture Lab](./apps/gesture-lab)** | hands, ui | Real-time gesture detection visualizer with hand rays |
 
@@ -255,8 +270,7 @@ Run a demo:
 
 ```bash
 pnpm install
-pnpm --filter physics-playground dev
-# or: spatial-notes, portal-gallery, avatar-mirror, spatial-dashboard, gesture-lab
+pnpm --filter mixed-reality-playground dev
 ```
 
 ## Development
