@@ -17,7 +17,8 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "test": "turbo test",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "turbo clean",
     "changeset": "changeset",
     "version-packages": "changeset version",
@@ -25,8 +26,19 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
+    "@react-three/fiber": "^9.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "^19.0.0",
+    "@types/three": "^0.170.0",
     "@types/webxr": "^0.5.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "happy-dom": "^15.0.0",
+    "jsdom": "^25.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.170.0",
     "turbo": "^2.4.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
   }
 }
