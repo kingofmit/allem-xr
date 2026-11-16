@@ -35,7 +35,7 @@ export function useAvatar(config: AvatarConfig): AvatarState {
         // Collect all bones
         const bones = new Map<string, THREE.Object3D>()
         scene.traverse((child: THREE.Object3D) => {
-          if ((child as THREE.Bone).isBone || child.name) {
+          if ((child as THREE.Bone).isBone) {
             bones.set(child.name.toLowerCase(), child)
           }
         })

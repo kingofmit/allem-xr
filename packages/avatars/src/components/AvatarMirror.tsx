@@ -1,18 +1,19 @@
 'use client'
 
-import React, { useRef, useMemo } from 'react'
+import React, { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import type { AvatarMirrorProps } from '../types'
 
+// Pre-allocated work vectors for mirror reflection
+const _mirrorPos = new THREE.Vector3()
+const _mirrorNormal = new THREE.Vector3()
+const _cameraToMirror = new THREE.Vector3()
+const _reflected = new THREE.Vector3()
+
 /**
  * A reflective mirror surface — look at it to see your avatar.
  * Uses a render target for real-time reflection.
- *
- * NOTE: This component allocates Vector3 instances per frame for the reflection
- * camera computation. This is acceptable because mirror rendering is inherently
- * expensive (full scene re-render) and the vector allocations are negligible
- * compared to the render pass itself.
  */
 export function AvatarMirror({
   position = [0, 1.5, -2],
@@ -33,22 +34,24 @@ export function AvatarMirror({
     [width, height]
   )
 
+  useEffect(() => {
+    return () => {
+      renderTarget.dispose()
+    }
+  }, [renderTarget])
+
   useFrame(() => {
     if (!meshRef.current) return
 
-    // Position mirror camera as reflection of main camera
-    const mirrorPos = meshRef.current.getWorldPosition(new THREE.Vector3())
-    const mirrorNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(meshRef.current.quaternion)
+    meshRef.current.getWorldPosition(_mirrorPos)
+    _mirrorNormal.set(0, 0, 1).applyQuaternion(meshRef.current.quaternion)
 
-    // Reflect camera position across mirror plane
-    const cameraToMirror = new THREE.Vector3().subVectors(camera.position, mirrorPos)
-    const reflected = cameraToMirror.clone().sub(
-      mirrorNormal.clone().multiplyScalar(2 * cameraToMirror.dot(mirrorNormal))
-    )
-    mirrorCamera.position.copy(mirrorPos).add(reflected)
-    mirrorCamera.lookAt(mirrorPos)
+    _cameraToMirror.subVectors(camera.position, _mirrorPos)
+    const dot = _cameraToMirror.dot(_mirrorNormal)
+    _reflected.copy(_cameraToMirror).addScaledVector(_mirrorNormal, -2 * dot)
+    mirrorCamera.position.copy(_mirrorPos).add(_reflected)
+    mirrorCamera.lookAt(_mirrorPos)
 
-    // Render reflection
     meshRef.current.visible = false
     gl.setRenderTarget(renderTarget)
     gl.render(scene, mirrorCamera)

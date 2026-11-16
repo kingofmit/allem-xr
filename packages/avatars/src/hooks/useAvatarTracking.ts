@@ -92,7 +92,7 @@ export function useAvatarTracking(
     }
 
     // Body estimation: infer hip position from head
-    if (estimateBody && xrState.viewerPose) {
+    if (estimateBody && head && xrState.viewerPose) {
       // Hip is roughly 0.6m below and slightly behind head
       _hipPos.set(
         _headPos.x,

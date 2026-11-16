@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import type { TransitionConfig, SceneTransitionState } from '../types'
 
 /**
@@ -8,7 +8,14 @@ import type { TransitionConfig, SceneTransitionState } from '../types'
  */
 export function useSceneTransition(): SceneTransitionState {
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const resolveRef = useRef<(() => void) | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
 
   const transition = useCallback(async (config?: TransitionConfig) => {
     const duration = config?.duration ?? 500
@@ -16,10 +23,10 @@ export function useSceneTransition(): SceneTransitionState {
     setIsTransitioning(true)
 
     return new Promise<void>(resolve => {
-      resolveRef.current = resolve
-      setTimeout(() => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = setTimeout(() => {
         setIsTransitioning(false)
-        resolveRef.current = null
+        timeoutRef.current = null
         resolve()
       }, duration)
     })
