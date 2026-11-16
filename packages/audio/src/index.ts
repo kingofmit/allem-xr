@@ -19,4 +19,5 @@ export type {
   SpatialAudioSourceProps,
   AudioZoneProps,
   AmbientAudioProps,
+  AmbientAudioState,
 } from './types'

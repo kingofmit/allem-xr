@@ -13,7 +13,7 @@ const _rightHandPos = new Vector3()
 const _rightHandRot = new Quaternion()
 const _hipPos = new Vector3()
 
-interface AvatarTrackingOptions {
+export interface AvatarTrackingOptions {
   head?: boolean
   hands?: boolean
   estimateBody?: boolean

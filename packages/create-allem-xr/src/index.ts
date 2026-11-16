@@ -39,20 +39,14 @@ ${BOLD}Usage:${RESET}
   npx create-allem-xr ${CYAN}<project-name>${RESET} [options]
 
 ${BOLD}Options:${RESET}
-  --ar          Scaffold with AR as the default mode (default)
-  --vr          Scaffold with VR as the default mode
   -v, --version Print version number
   -h, --help    Show this help message
 
 ${BOLD}Example:${RESET}
   npx create-allem-xr my-xr-app
-  npx create-allem-xr my-vr-game --vr
   cd my-xr-app
   npm install
   npm run dev
-
-${DIM}The generated template includes buttons for both AR and VR modes
-regardless of which flag you pass.${RESET}
 `)
     process.exit(projectName ? 0 : 1)
   }
