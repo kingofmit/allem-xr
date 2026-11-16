@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { getAudioContext, resumeAudioContext } from '../audioContext'
+import type { AmbientAudioState } from '../types'
 
 interface AmbientAudioOptions {
   volume?: number
@@ -12,7 +13,7 @@ interface AmbientAudioOptions {
 /**
  * Non-spatial audio playback (background music, ambience).
  */
-export function useAmbientAudio(src: string, options?: AmbientAudioOptions) {
+export function useAmbientAudio(src: string, options?: AmbientAudioOptions): AmbientAudioState {
   const { volume = 1, loop = true, autoplay = false } = options ?? {}
 
   const audioRef = useRef<HTMLAudioElement | null>(null)

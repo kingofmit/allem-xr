@@ -69,6 +69,8 @@ const pinch = useGesture('pinch', { hand: 'right' })
 // → { active: true, confidence: 0.95, position: Vector3 }
 ```
 
+Also: `useCustomGesture` for custom detectors, `usePinchInteraction` and `useGrabInteraction` for mesh interaction, `HandRay` for pointing.
+
 ### Spatial Understanding
 Hit testing, plane detection, persistent spatial anchors, scene mesh, depth sensing, and light estimation.
 
@@ -78,6 +80,8 @@ import { usePlanes, useHitTest } from '@allem-xr/spatial'
 const { planes } = usePlanes({ filter: 'horizontal' })
 const { results } = useHitTest({ source: 'viewer' })
 ```
+
+Also: `useAnchor` for persistent spatial anchors, `useSceneMesh` and `SceneMeshOccluder` for scene mesh, `useDepth` for depth sensing, `useLightEstimate` for lighting, `PlaneOverlay` and `SurfacePlacer` components.
 
 ### Spatial UI
 Panels, buttons, sliders, toggles, and more — rendered as Three.js geometry. Works in VR, AR, and on desktop.
@@ -91,6 +95,8 @@ import { Panel, Button, Text, Slider } from '@allem-xr/ui'
   <Button onSelect={save}>Save</Button>
 </Panel>
 ```
+
+Also: `Toggle`, `ProgressBar`, `Tooltip`, `RadialMenu`, `SpatialText`, `GazePointer`, and `useGazeInteraction` for gaze-based UI.
 
 ### Physics with Real-World Colliders
 Rapier WASM physics that interacts with detected real-world surfaces. Throw virtual objects and watch them bounce off your real table.
@@ -106,6 +112,8 @@ import { PhysicsWorld, RigidBody, RealWorldCollider } from '@allem-xr/physics'
 </PhysicsWorld>
 ```
 
+Also: `useHandPhysics` for hand-driven rigid bodies, `useGravity` for gravity control, `useCollision` for collision callbacks.
+
 ### Spatial Audio
 HRTF-based positional audio with automatic listener sync to the XR head pose.
 
@@ -116,6 +124,8 @@ useAudioListener() // syncs to camera
 <SpatialAudioSource src="/waterfall.mp3" position={[5, 0, -3]} autoplay loop />
 ```
 
+Also: `useAmbientAudio` for non-spatial background music, `AudioZone` for region-based audio effects.
+
 ### Avatars & IK
 Load GLB/VRM models, drive them with XR tracking, and see yourself in a mirror.
 
@@ -124,6 +134,8 @@ import { Avatar } from '@allem-xr/avatars'
 
 <Avatar model="/character.vrm" trackHead trackHands estimateBody />
 ```
+
+Also: `useAvatarTracking` for manual IK target control, `useIK` for the FABRIK solver, `AvatarMirror` for VR mirrors.
 
 ### Portals & Transitions
 Walk through a portal into a virtual world. Stencil-buffer rendering creates the "window into another reality" effect.
@@ -136,6 +148,8 @@ import { Portal, Guardian } from '@allem-xr/portals'
 </Portal>
 <Guardian radius={2} fadeDistance={0.5} />
 ```
+
+Also: `useSceneTransition` for animated scene changes, `usePassthrough` for passthrough state, `PassthroughWindow` for passthrough holes in VR, `useGuardian` for boundary tracking.
 
 ## Packages
 
@@ -178,6 +192,8 @@ npm run dev
 ```
 
 Opens a working XR app with hand tracking, HTTPS dev server, and hot reload.
+
+> **Note:** WebXR requires HTTPS. The dev server uses [mkcert](https://github.com/nicolo-ribaudo/vite-plugin-mkcert) for local HTTPS certificates automatically.
 
 ### Option 2: Add to an existing R3F project
 

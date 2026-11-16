@@ -50,6 +50,13 @@ export interface AudioZoneProps {
   dampening?: number
 }
 
+export interface AmbientAudioState {
+  play: () => Promise<void>
+  pause: () => void
+  stop: () => void
+  isPlaying: boolean
+}
+
 export interface AmbientAudioProps {
   src: string
   volume?: number

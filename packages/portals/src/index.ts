@@ -20,3 +20,5 @@ export type {
   SceneTransitionState,
   GuardianState,
 } from './types'
+
+export type { PassthroughState } from './hooks/usePassthrough'

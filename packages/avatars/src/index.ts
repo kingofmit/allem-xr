@@ -18,3 +18,5 @@ export type {
   AvatarProps,
   AvatarMirrorProps,
 } from './types'
+
+export type { AvatarTrackingOptions } from './hooks/useAvatarTracking'

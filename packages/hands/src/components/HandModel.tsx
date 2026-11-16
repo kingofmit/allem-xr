@@ -182,7 +182,7 @@ export function HandModel({
       let lines = bonesRef.current
       if (!lines) {
         const geo = new THREE.BufferGeometry()
-        const attr = new THREE.BufferAttribute(buffer.slice(0, offset), 3)
+        const attr = new THREE.BufferAttribute(buffer.subarray(0, offset), 3)
         attr.setUsage(THREE.DynamicDrawUsage)
         geo.setAttribute('position', attr)
         lines = new THREE.LineSegments(geo, boneMaterial)
