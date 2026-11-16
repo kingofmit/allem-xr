@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react'
 import { usePhysicsContext } from '../context'
 import type { RealWorldColliderProps } from '../types'
-import type { Collider } from '@dimforge/rapier3d-compat'
+import type { Collider, RigidBody as RapierRigidBody } from '@dimforge/rapier3d-compat'
 
 interface RealWorldColliderFullProps extends RealWorldColliderProps {
   /** Detected planes from @allem-xr/spatial usePlanes() */
@@ -27,7 +27,7 @@ export function RealWorldCollider({
   planes = [],
 }: RealWorldColliderFullProps) {
   const { world, rapier, ready } = usePhysicsContext()
-  const collidersRef = useRef<Map<string, Collider>>(new Map())
+  const entriesRef = useRef<Map<string, { body: RapierRigidBody; collider: Collider }>>(new Map())
 
   useEffect(() => {
     if (!world || !rapier || !ready || source !== 'planes') return
@@ -38,7 +38,7 @@ export function RealWorldCollider({
       currentIds.add(plane.id)
 
       // Skip if already created
-      if (collidersRef.current.has(plane.id)) continue
+      if (entriesRef.current.has(plane.id)) continue
 
       // Create a thin cuboid collider matching the plane extent
       const [width, height] = plane.extent
@@ -60,14 +60,14 @@ export function RealWorldCollider({
         .setRestitution(restitution)
 
       const collider = world.createCollider(colliderDesc, body)
-      collidersRef.current.set(plane.id, collider)
+      entriesRef.current.set(plane.id, { body, collider })
     }
 
-    // Remove colliders for planes that no longer exist
-    for (const [id, collider] of collidersRef.current) {
+    // Remove bodies (and their colliders) for planes that no longer exist
+    for (const [id, entry] of entriesRef.current) {
       if (!currentIds.has(id)) {
-        world.removeCollider(collider, true)
-        collidersRef.current.delete(id)
+        try { world.removeRigidBody(entry.body) } catch {}
+        entriesRef.current.delete(id)
       }
     }
   }, [world, rapier, ready, planes, friction, restitution, source])
@@ -76,10 +76,10 @@ export function RealWorldCollider({
   useEffect(() => {
     return () => {
       if (!world) return
-      for (const [, collider] of collidersRef.current) {
-        try { world.removeCollider(collider, true) } catch {}
+      for (const [, entry] of entriesRef.current) {
+        try { world.removeRigidBody(entry.body) } catch {}
       }
-      collidersRef.current.clear()
+      entriesRef.current.clear()
     }
   }, [world])
 

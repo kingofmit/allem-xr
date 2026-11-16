@@ -8,6 +8,8 @@ import { SpatialText } from './SpatialText'
 import type { Group } from 'three'
 import type { TooltipProps } from '../types'
 
+const _worldPos = new THREE.Vector3()
+
 /**
  * A floating tooltip that follows a target object.
  */
@@ -21,11 +23,11 @@ export function Tooltip({
 
   useFrame(() => {
     if (!groupRef.current || !target.current) return
-    const pos = target.current.getWorldPosition(new THREE.Vector3())
+    target.current.getWorldPosition(_worldPos)
     groupRef.current.position.set(
-      pos.x + offset[0],
-      pos.y + offset[1],
-      pos.z + offset[2]
+      _worldPos.x + offset[0],
+      _worldPos.y + offset[1],
+      _worldPos.z + offset[2]
     )
   })
 

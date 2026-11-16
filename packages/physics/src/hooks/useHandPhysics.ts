@@ -54,7 +54,7 @@ export function useHandPhysics(options: UseHandPhysicsOptions) {
       }
       bodiesRef.current.clear()
     }
-  }, [world, rapier, ready, jointRadius])
+  }, [world, rapier, ready, jointRadius, hand])
 
   // Update kinematic positions each frame
   useXRFrame((frame, _delta, referenceSpace) => {

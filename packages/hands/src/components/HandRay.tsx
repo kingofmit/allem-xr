@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useMemo } from 'react'
+import React, { useRef, useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 import { useXRContext, useXRFrame } from '@allem-xr/core'
 import type { Group } from 'three'
@@ -43,6 +43,14 @@ export function HandRay({
 
   const lineObject = useMemo(() => new THREE.Line(geometry, material), [geometry, material])
 
+  useEffect(() => {
+    return () => {
+      geometry.dispose()
+      material.dispose()
+      lineObject.geometry?.dispose()
+    }
+  }, [geometry, material, lineObject])
+
   useXRFrame((frame, _delta, referenceSpace) => {
     const group = groupRef.current
     if (!group || !visible) {
@@ -81,7 +89,7 @@ export function HandRay({
 
     group.visible = true
 
-    // Ray from tip in the direction of proximal→tip
+    // Direction from proximal to tip (forward pointing)
     const tipPos = tipPose.transform.position
     const proxPos = proxPose.transform.position
     const dirX = tipPos.x - proxPos.x

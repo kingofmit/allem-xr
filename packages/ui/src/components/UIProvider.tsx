@@ -15,8 +15,7 @@ interface RegisteredUI {
 }
 
 const _raycaster = new THREE.Raycaster()
-const _direction = new THREE.Vector3()
-const _origin = new THREE.Vector3()
+const _screenCenter = new THREE.Vector2(0, 0)
 
 /**
  * UIProvider — manages interaction between XR inputs and spatial UI elements.
@@ -55,7 +54,7 @@ export function UIProvider({ children }: UIProviderProps) {
     if (meshes.length === 0) return
 
     // Cast ray from camera center (gaze direction)
-    _raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
+    _raycaster.setFromCamera(_screenCenter, camera)
 
     const intersects = _raycaster.intersectObjects(meshes, true)
 

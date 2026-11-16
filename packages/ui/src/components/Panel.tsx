@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, forwardRef } from 'react'
+import React, { useRef, useEffect, forwardRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Group } from 'three'
@@ -24,21 +24,29 @@ export const Panel = forwardRef<Group, PanelProps>(function Panel(
   },
   ref
 ) {
-  const groupRef = useRef<Group>(null)
-  const mergedRef = (ref as React.MutableRefObject<Group>) || groupRef
+  const internalRef = useRef<Group>(null)
   const { camera } = useThree()
+
+  // Sync forwarded ref
+  useEffect(() => {
+    if (typeof ref === 'function') {
+      ref(internalRef.current)
+    } else if (ref) {
+      (ref as React.MutableRefObject<Group | null>).current = internalRef.current
+    }
+  })
 
   // Billboard toward camera each frame
   useFrame(() => {
-    if (followGaze && mergedRef.current) {
-      mergedRef.current.lookAt(camera.position)
+    if (followGaze && internalRef.current) {
+      internalRef.current.lookAt(camera.position)
     }
   })
 
   if (!visible) return null
 
   return (
-    <group ref={mergedRef} position={position}>
+    <group ref={internalRef} position={position}>
       {/* Background plane */}
       <mesh>
         <planeGeometry args={[width, height]} />

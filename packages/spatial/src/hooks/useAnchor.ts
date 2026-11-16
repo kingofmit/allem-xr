@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useCallback } from 'react'
+
 import { Vector3, Quaternion } from 'three'
 import { useXRContext, useXRFrame } from '@allem-xr/core'
 import type { Anchor, AnchorState } from '../types'
@@ -16,6 +17,7 @@ export function useAnchor(): AnchorState {
   const ctx = useXRContext()
   const [anchors, setAnchors] = useState<Anchor[]>([])
   const anchorsMapRef = useRef<Map<string, { anchor: Anchor; xrAnchor: XRAnchor }>>(new Map())
+  const isRestoringRef = useRef(false)
   const [supported, setSupported] = useState(false)
 
   // Update anchor poses each frame
@@ -114,9 +116,15 @@ export function useAnchor(): AnchorState {
   }, [])
 
   const restore = useCallback(async (): Promise<Anchor[]> => {
+    if (isRestoringRef.current) return []
+    isRestoringRef.current = true
+
     const frameState = ctx.getFrameState()
     const session = frameState.session
-    if (!session) return []
+    if (!session) {
+      isRestoringRef.current = false
+      return []
+    }
 
     try {
       const stored = JSON.parse(localStorage.getItem(PERSIST_KEY) ?? '{}')
@@ -126,6 +134,8 @@ export function useAnchor(): AnchorState {
         try {
           const xrAnchor = await (session as any).restorePersistentAnchor?.(handle)
           if (xrAnchor) {
+            // Position starts at origin; updated on next frame via useXRFrame.
+            // isTracking: false signals to consumers the pose isn't valid yet.
             const anchor: Anchor = {
               id,
               position: new Vector3(),
@@ -150,6 +160,8 @@ export function useAnchor(): AnchorState {
       return restoredAnchors
     } catch {
       return []
+    } finally {
+      isRestoringRef.current = false
     }
   }, [ctx])
 

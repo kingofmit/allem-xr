@@ -12,6 +12,7 @@ interface GazeInteractionOptions {
 }
 
 const _raycaster = new THREE.Raycaster()
+const _gazeScreenCenter = new THREE.Vector2(0, 0)
 
 /**
  * Gaze-based interaction for any R3F object.
@@ -34,7 +35,7 @@ export function useGazeInteraction(
   useFrame(() => {
     if (!meshRef.current) return
 
-    _raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
+    _raycaster.setFromCamera(_gazeScreenCenter, camera)
     const hits = _raycaster.intersectObject(meshRef.current, true)
     const isHit = hits.length > 0
 

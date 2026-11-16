@@ -28,7 +28,16 @@ export function useHitTest(options?: HitTestOptions): HitTestState {
   useXRFrame((frame, _delta, referenceSpace) => {
     const xrState = ctx.getFrameState()
     const session = xrState.session
-    if (!session) return
+
+    // Clean up hit test source when session ends
+    if (!session) {
+      if (hitTestSourceRef.current) {
+        try { hitTestSourceRef.current.cancel() } catch {}
+        hitTestSourceRef.current = null
+        requestPendingRef.current = false
+      }
+      return
+    }
 
     // Request hit test source once
     if (!hitTestSourceRef.current && !requestPendingRef.current) {

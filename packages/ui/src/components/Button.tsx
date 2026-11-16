@@ -77,6 +77,13 @@ export function Button({
     }
   }, [interactionState, color, hoverColor, activeColor, disabled])
 
+  // Update base color when prop changes
+  useEffect(() => {
+    if (interactionState === 'idle') {
+      targetColorRef.current.set(disabled ? '#555555' : color)
+    }
+  }, [color, disabled])
+
   // Animate color and scale
   useFrame((_state, delta) => {
     const mesh = meshRef.current
@@ -97,7 +104,6 @@ export function Button({
     <group ref={groupRef} position={position}>
       <mesh
         ref={meshRef}
-        onClick={disabled ? undefined : onSelect}
         onPointerOver={() => !disabled && setInteractionState('hovered')}
         onPointerOut={() => setInteractionState('idle')}
         onPointerDown={() => !disabled && setInteractionState('active')}
