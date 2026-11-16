@@ -57,3 +57,25 @@ export interface HandModelProps {
   jointSize?: number
   boneWidth?: number
 }
+
+export interface PinchInteractionOptions {
+  onPinchStart?: (hand: 'left' | 'right', position: ThreeVector3) => void
+  onPinchMove?: (hand: 'left' | 'right', position: ThreeVector3, delta: ThreeVector3) => void
+  onPinchEnd?: (hand: 'left' | 'right') => void
+}
+
+export interface GrabInteractionOptions {
+  onGrab?: (hand: 'left' | 'right', position: ThreeVector3) => void
+  onMove?: (hand: 'left' | 'right', position: ThreeVector3, velocity: ThreeVector3) => void
+  onRelease?: (hand: 'left' | 'right', velocity: ThreeVector3) => void
+  threshold?: number
+  grabDistance?: number
+}
+
+export interface HandRayProps {
+  hand: 'left' | 'right'
+  color?: string
+  maxLength?: number
+  opacity?: number
+  visible?: boolean
+}

@@ -1,70 +1,40 @@
-"use client";
+'use client'
 
-import { useEffect, useState, type CSSProperties } from "react";
-
-export interface GazePointerProps {
-  /** Pointer size in pixels (rendered as a circle). */
-  size?: number;
-  /** Dwell time in milliseconds before triggering a select. */
-  dwellTime?: number;
-  /** Custom CSS class. */
-  className?: string;
-  /** Custom inline styles. */
-  style?: CSSProperties;
-}
+import React, { useRef } from 'react'
+import * as THREE from 'three'
+import { useFrame, useThree } from '@react-three/fiber'
+import type { Group } from 'three'
+import type { GazePointerProps } from '../types'
 
 /**
- * A gaze-based cursor that follows the user's head direction.
- *
- * When the pointer dwells on an interactive element for the configured
- * duration, it triggers a select event. Useful for hands-free interaction.
- *
- * @example
- * ```tsx
- * <GazePointer size={24} dwellTime={800} />
- * ```
+ * A gaze cursor that follows the camera's forward direction.
+ * Shows a ring at a fixed distance from the camera.
  */
 export function GazePointer({
-  size = 20,
-  dwellTime = 1000,
-  className,
-  style,
+  size = 0.005,
+  distance = 1,
+  color = 'white',
+  visible = true,
 }: GazePointerProps) {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDwelling, setIsDwelling] = useState(false);
+  const groupRef = useRef<Group>(null)
+  const { camera } = useThree()
 
-  useEffect(() => {
-    // In an XR session, the gaze direction comes from the XRView's
-    // transform. Outside XR, we fall back to mouse position for testing.
-    const handleMouseMove = (event: MouseEvent) => {
-      setPosition({ x: event.clientX, y: event.clientY });
-    };
+  useFrame(() => {
+    if (!groupRef.current) return
+    // Position pointer at camera forward direction
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
+    groupRef.current.position.copy(camera.position).addScaledVector(dir, distance)
+    groupRef.current.lookAt(camera.position)
+  })
 
-    if (typeof window !== "undefined") {
-      window.addEventListener("mousemove", handleMouseMove);
-      return () => window.removeEventListener("mousemove", handleMouseMove);
-    }
-  }, []);
+  if (!visible) return null
 
   return (
-    <div
-      className={className}
-      style={{
-        position: "fixed",
-        left: position.x - size / 2,
-        top: position.y - size / 2,
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        border: "2px solid white",
-        pointerEvents: "none",
-        zIndex: 9999,
-        ...style,
-      }}
-      data-xr-gaze-pointer=""
-      data-xr-dwelling={isDwelling || undefined}
-      data-xr-dwell-time={dwellTime}
-      aria-hidden="true"
-    />
-  );
+    <group ref={groupRef}>
+      <mesh>
+        <ringGeometry args={[size * 0.6, size, 32]} />
+        <meshBasicMaterial color={color} transparent opacity={0.8} side={THREE.DoubleSide} depthTest={false} />
+      </mesh>
+    </group>
+  )
 }

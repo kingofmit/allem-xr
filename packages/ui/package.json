@@ -20,10 +20,13 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "troika-three-text": "^0.52.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

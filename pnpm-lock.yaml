@@ -325,6 +325,10 @@ importers:
         version: 5.9.3
 
   packages/ui:
+    dependencies:
+      troika-three-text:
+        specifier: ^0.52.0
+        version: 0.52.5(three@0.170.0)
     devDependencies:
       '@allem-xr/core':
         specifier: workspace:*
