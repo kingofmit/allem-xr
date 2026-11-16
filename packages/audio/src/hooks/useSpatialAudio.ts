@@ -1,64 +1,167 @@
-"use client";
+'use client'
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { SpatialAudioConfig, SpatialAudioState, Vector3 } from "../types";
+import { useRef, useState, useCallback, useEffect } from 'react'
+import { getAudioContext, resumeAudioContext } from '../audioContext'
+import type { SpatialAudioConfig, SpatialAudioState } from '../types'
 
 /**
- * Hook for playing audio at a position in 3D space.
- *
- * Uses the Web Audio API with a PannerNode for spatial positioning.
- *
- * @param src - URL of the audio file
- * @param config - Spatial audio configuration
- *
- * @example
- * ```tsx
- * const { play, pause, isPlaying } = useSpatialAudio("/sound.mp3", {
- *   position: { x: 1, y: 0, z: -2 },
- * });
- * ```
+ * Play audio at a 3D position with HRTF spatialization.
  */
-export function useSpatialAudio(src: string, config: SpatialAudioConfig = {}): SpatialAudioState {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const pannerRef = useRef<PannerNode | null>(null);
+export function useSpatialAudio(src: string, config?: SpatialAudioConfig): SpatialAudioState {
+  const {
+    position = [0, 0, 0],
+    maxDistance = 10,
+    rolloffFactor = 1,
+    refDistance = 1,
+    coneInnerAngle = 360,
+    coneOuterAngle = 360,
+    coneOuterGain = 0,
+    loop = false,
+    volume = 1,
+    autoplay = false,
+    hrtf = true,
+  } = config ?? {}
 
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const pannerRef = useRef<PannerNode | null>(null)
+  const gainRef = useRef<GainNode | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+
+  // Initialize audio nodes
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    audioContextRef.current = new AudioContext();
+    const ctx = getAudioContext()
+    const audio = new Audio(src)
+    audio.crossOrigin = 'anonymous'
+    audio.loop = loop
+    audio.preload = 'auto'
+
+    const source = ctx.createMediaElementSource(audio)
+    const panner = ctx.createPanner()
+    const gain = ctx.createGain()
+
+    panner.panningModel = hrtf ? 'HRTF' : 'equalpower'
+    panner.distanceModel = 'inverse'
+    panner.maxDistance = maxDistance
+    panner.rolloffFactor = rolloffFactor
+    panner.refDistance = refDistance
+    panner.coneInnerAngle = coneInnerAngle
+    panner.coneOuterAngle = coneOuterAngle
+    panner.coneOuterGain = coneOuterGain
+    panner.positionX.setValueAtTime(position[0], ctx.currentTime)
+    panner.positionY.setValueAtTime(position[1], ctx.currentTime)
+    panner.positionZ.setValueAtTime(position[2], ctx.currentTime)
+
+    gain.gain.setValueAtTime(volume, ctx.currentTime)
+
+    source.connect(panner)
+    panner.connect(gain)
+    gain.connect(ctx.destination)
+
+    audioRef.current = audio
+    sourceNodeRef.current = source
+    pannerRef.current = panner
+    gainRef.current = gain
+
+    audio.addEventListener('loadedmetadata', () => {
+      setDuration(audio.duration)
+    })
+
+    audio.addEventListener('ended', () => {
+      setIsPlaying(false)
+    })
+
+    audio.addEventListener('timeupdate', () => {
+      setCurrentTime(audio.currentTime)
+    })
+
+    if (autoplay) {
+      resumeAudioContext().then(() => {
+        audio.play().catch(() => {})
+        setIsPlaying(true)
+      })
+    }
 
     return () => {
-      audioContextRef.current?.close();
-    };
-  }, []);
+      audio.pause()
+      audio.src = ''
+      source.disconnect()
+      panner.disconnect()
+      gain.disconnect()
+      audioRef.current = null
+      sourceNodeRef.current = null
+      pannerRef.current = null
+      gainRef.current = null
+    }
+  }, [src]) // Only recreate when src changes
 
-  const play = useCallback(() => {
-    // In a full implementation, this would load the audio buffer,
-    // create a PannerNode at the configured position, and start playback.
-    setIsPlaying(true);
-  }, []);
+  // Update panner position when config changes
+  useEffect(() => {
+    const panner = pannerRef.current
+    if (!panner) return
+    const ctx = getAudioContext()
+    panner.positionX.setValueAtTime(position[0], ctx.currentTime)
+    panner.positionY.setValueAtTime(position[1], ctx.currentTime)
+    panner.positionZ.setValueAtTime(position[2], ctx.currentTime)
+  }, [position[0], position[1], position[2]])
+
+  // Update volume
+  useEffect(() => {
+    const gain = gainRef.current
+    if (!gain) return
+    gain.gain.setValueAtTime(volume, getAudioContext().currentTime)
+  }, [volume])
+
+  // Update loop
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.loop = loop
+  }, [loop])
+
+  const play = useCallback(async () => {
+    await resumeAudioContext()
+    const audio = audioRef.current
+    if (audio) {
+      await audio.play()
+      setIsPlaying(true)
+    }
+  }, [])
 
   const pause = useCallback(() => {
-    setIsPlaying(false);
-  }, []);
+    audioRef.current?.pause()
+    setIsPlaying(false)
+  }, [])
 
   const stop = useCallback(() => {
-    sourceRef.current?.stop();
-    setIsPlaying(false);
-  }, []);
-
-  const setPosition = useCallback((position: Vector3) => {
-    if (pannerRef.current) {
-      pannerRef.current.positionX.value = position.x;
-      pannerRef.current.positionY.value = position.y;
-      pannerRef.current.positionZ.value = position.z;
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      audio.currentTime = 0
+      setIsPlaying(false)
     }
-  }, []);
+  }, [])
 
-  const setVolume = useCallback((_volume: number) => {
-    // Adjust gain node volume
-  }, []);
+  const seek = useCallback((time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time
+    }
+  }, [])
 
-  return { play, pause, stop, setPosition, setVolume, isPlaying };
+  const setPosition = useCallback((x: number, y: number, z: number) => {
+    const panner = pannerRef.current
+    if (!panner) return
+    const ctx = getAudioContext()
+    panner.positionX.setValueAtTime(x, ctx.currentTime)
+    panner.positionY.setValueAtTime(y, ctx.currentTime)
+    panner.positionZ.setValueAtTime(z, ctx.currentTime)
+  }, [])
+
+  const setVolume = useCallback((v: number) => {
+    const gain = gainRef.current
+    if (!gain) return
+    gain.gain.setValueAtTime(v, getAudioContext().currentTime)
+  }, [])
+
+  return { play, pause, stop, seek, setPosition, setVolume, isPlaying, currentTime, duration }
 }

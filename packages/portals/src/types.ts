@@ -1,40 +1,56 @@
-/** 3D position vector. */
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
+import type { Vector3 } from 'three'
 
-/** Quaternion rotation. */
-export interface Quaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
+export type TransitionEffect = 'fade' | 'dissolve' | 'iris'
 
-/** Portal size in meters. */
-export interface PortalSize {
-  width: number;
-  height: number;
-}
-
-/** Scene transition configuration. */
 export interface TransitionConfig {
-  /** Transition duration in milliseconds. */
-  duration?: number;
-  /** Transition easing. */
-  easing?: "linear" | "ease-in" | "ease-out" | "ease-in-out";
-  /** Fade color during transition. */
-  fadeColor?: string;
+  duration?: number
+  effect?: TransitionEffect
+  fadeColor?: string
 }
 
-/** Return type for usePortalTransition. */
-export interface PortalTransitionState {
-  /** Transition to a named scene. */
-  transition: (sceneName: string, config?: TransitionConfig) => Promise<void>;
-  /** Whether a transition is in progress. */
-  isTransitioning: boolean;
-  /** Name of the current scene. */
-  currentScene: string;
+export interface PortalProps {
+  children?: React.ReactNode
+  position?: [number, number, number]
+  rotation?: [number, number, number]
+  size?: [number, number]
+  onEnter?: () => void
+  onExit?: () => void
+  renderBorder?: boolean
+  borderColor?: string
+  borderWidth?: number
+}
+
+export interface SceneTransitionProps {
+  active: boolean
+  duration?: number
+  effect?: TransitionEffect
+  color?: string
+  onComplete?: () => void
+}
+
+export interface GuardianProps {
+  radius?: number
+  color?: string
+  opacity?: number
+  fadeDistance?: number
+  segments?: number
+  height?: number
+  onBreach?: () => void
+  visible?: boolean
+}
+
+export interface PassthroughWindowProps {
+  position?: [number, number, number]
+  size?: [number, number]
+  shape?: 'rectangle' | 'circle'
+}
+
+export interface SceneTransitionState {
+  transition: (config?: TransitionConfig) => Promise<void>
+  isTransitioning: boolean
+}
+
+export interface GuardianState {
+  isNearBoundary: boolean
+  distanceToBoundary: number
 }

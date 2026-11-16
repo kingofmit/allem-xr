@@ -1,75 +1,52 @@
-/** 3D position vector. */
-export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
+import type { Vector3, Quaternion, Group, Object3D } from 'three'
 
-/** Quaternion rotation. */
-export interface Quaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
+export type IKEffector = 'head' | 'leftHand' | 'rightHand' | 'hips' | 'leftFoot' | 'rightFoot'
 
-/** A bone in the avatar skeleton. */
-export interface Bone {
-  name: string;
-  position: Vector3;
-  rotation: Quaternion;
-  parent: string | null;
-  children: string[];
-}
-
-/** Avatar skeleton definition. */
-export interface Skeleton {
-  bones: Bone[];
-  rootBone: string;
-}
-
-/** IK (Inverse Kinematics) target. */
 export interface IKTarget {
-  /** Which body part this target drives. */
-  effector: "head" | "leftHand" | "rightHand" | "leftFoot" | "rightFoot" | "hips";
-  /** Target position. */
-  position: Vector3;
-  /** Target rotation. */
-  rotation?: Quaternion;
-  /** Weight of this IK constraint (0-1). */
-  weight?: number;
+  effector: IKEffector
+  position: Vector3
+  rotation?: Quaternion
+  weight?: number
 }
 
-/** Avatar configuration. */
-export interface AvatarConfig {
-  /** URL of the 3D model (GLB/GLTF). */
-  modelUrl?: string;
-  /** Initial skeleton pose. */
-  skeleton?: Skeleton;
-  /** Scale multiplier. */
-  scale?: number;
+export interface IKChain {
+  name: string
+  boneNames: string[]
+  target: IKTarget
 }
 
-/** Avatar state returned by useAvatar. */
-export interface AvatarState {
-  /** Whether the avatar model is loaded. */
-  isLoaded: boolean;
-  /** The avatar skeleton. */
-  skeleton: Skeleton | null;
-  /** Current IK targets. */
-  ikTargets: IKTarget[];
-  /** Update an IK target. */
-  setIKTarget: (target: IKTarget) => void;
-  /** Configuration. */
-  config: AvatarConfig;
-}
-
-/** IK solver state returned by useIK. */
 export interface IKState {
-  /** Whether the IK solver is active. */
-  isActive: boolean;
-  /** Set IK targets for the solver. */
-  setTargets: (targets: IKTarget[]) => void;
-  /** Current solved bone transforms. */
-  solvedBones: Bone[];
+  isActive: boolean
+  setTarget: (effector: IKEffector, position: Vector3, rotation?: Quaternion) => void
+  solvedBones: Map<string, { position: Vector3; rotation: Quaternion }>
+}
+
+export interface AvatarConfig {
+  modelUrl: string
+  scale?: number
+  ikEnabled?: boolean
+}
+
+export interface AvatarState {
+  isLoaded: boolean
+  scene: Group | null
+  setIKTarget: (effector: IKEffector, position: Vector3, rotation?: Quaternion) => void
+  bones: Map<string, Object3D>
+}
+
+export interface AvatarProps {
+  model: string
+  trackHead?: boolean
+  trackHands?: boolean
+  estimateBody?: boolean
+  scale?: number
+  castShadow?: boolean
+  position?: [number, number, number]
+}
+
+export interface AvatarMirrorProps {
+  position?: [number, number, number]
+  width?: number
+  height?: number
+  resolution?: number
 }
