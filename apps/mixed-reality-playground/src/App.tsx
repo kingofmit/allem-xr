@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Environment, Float, MeshTransmissionMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 
 // Core
@@ -10,7 +10,7 @@ import { XRProvider, XRScene, XROrigin, useXRSession, useXRSupport } from '@alle
 import { HandModel, HandRay, useGesture } from '@allem-xr/hands'
 
 // Spatial
-import { usePlanes, PlaneOverlay, useHitTest } from '@allem-xr/spatial'
+import { usePlanes, PlaneOverlay } from '@allem-xr/spatial'
 
 // Physics
 import { PhysicsWorld, RigidBody, RealWorldCollider, useHandPhysics, useGravity } from '@allem-xr/physics'
@@ -22,137 +22,210 @@ import { UIProvider, Panel, Button, Text, Slider, Toggle, ProgressBar, GazePoint
 import { useAudioListener } from '@allem-xr/audio'
 
 // Portals
-import { Portal, Guardian, SceneTransition, useSceneTransition } from '@allem-xr/portals'
+import { Portal, Guardian } from '@allem-xr/portals'
 
 // ============================================================
-// CARTOON WORLD (inside the portal)
+// ETHEREAL WORLD (inside the portal)
 // ============================================================
 
-function CartoonWorld() {
+function EtherealWorld() {
   return (
     <group>
-      {/* Colorful ground */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]}>
-        <planeGeometry args={[12, 12]} />
-        <meshStandardMaterial color="#7ec850" />
+      {/* Soft ground plane */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, -0.01, 0]} receiveShadow>
+        <circleGeometry args={[6, 64]} />
+        <meshStandardMaterial color="#1a3a2a" roughness={0.9} />
       </mesh>
 
-      {/* Mushrooms */}
-      {[[-1, 0, -1], [1.5, 0, -0.5], [-0.5, 0, -2], [2, 0, -1.5]].map(([x, y, z], i) => (
-        <group key={`mush-${i}`} position={[x, y, z]}>
-          <mesh position={[0, 0.15, 0]}>
-            <cylinderGeometry args={[0.04, 0.05, 0.3, 8]} />
-            <meshStandardMaterial color="#f5deb3" />
-          </mesh>
-          <mesh position={[0, 0.35, 0]}>
-            <sphereGeometry args={[0.12, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color={['#ff4444', '#ff8844', '#ff44aa', '#ffaa44'][i]} />
-          </mesh>
-          {/* White dots on cap */}
-          {[0, 1, 2, 3].map(j => {
-            const a = (j / 4) * Math.PI * 2
-            return (
-              <mesh key={j} position={[Math.cos(a) * 0.07, 0.38, Math.sin(a) * 0.07]}>
-                <sphereGeometry args={[0.015, 6, 6]} />
-                <meshBasicMaterial color="#ffffff" />
-              </mesh>
-            )
-          })}
-        </group>
+      {/* Bioluminescent trees */}
+      {[[-2, 0, -2], [2.5, 0, -1.5], [0, 0, -3.5], [-1.5, 0, -0.5], [1, 0, -2.8]].map(([x, y, z], i) => (
+        <GlowTree key={`tree-${i}`} position={[x, y, z]} index={i} />
       ))}
 
-      {/* Floating crystals */}
-      {[[-0.8, 0.8, -1.5], [1, 1.2, -1], [0, 0.6, -2.5]].map(([x, y, z], i) => (
-        <FloatingCrystal key={`crystal-${i}`} position={[x, y, z]} color={['#44ddff', '#ff44dd', '#ddff44'][i]} />
+      {/* Floating light orbs */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i / 12) * Math.PI * 2
+        const r = 1.5 + Math.random() * 2
+        return (
+          <FloatingOrb
+            key={`orb-${i}`}
+            position={[Math.cos(angle) * r, 0.5 + Math.random() * 1.5, Math.sin(angle) * r - 2]}
+            color={['#66ffcc', '#44aaff', '#cc88ff', '#ffaa66'][i % 4]}
+            speed={0.5 + Math.random() * 0.5}
+          />
+        )
+      })}
+
+      {/* Ethereal fog particles */}
+      {Array.from({ length: 30 }).map((_, i) => (
+        <FogParticle key={`fog-${i}`} index={i} />
       ))}
 
-      {/* Trees */}
-      {[[2.5, 0, -2], [-2, 0, -1.5], [0, 0, -3]].map(([x, y, z], i) => (
-        <group key={`tree-${i}`} position={[x, y, z]}>
-          <mesh position={[0, 0.4, 0]}>
-            <cylinderGeometry args={[0.06, 0.1, 0.8, 8]} />
-            <meshStandardMaterial color="#8B5A2B" />
-          </mesh>
-          <mesh position={[0, 1, 0]}>
-            <sphereGeometry args={[0.4, 12, 12]} />
-            <meshStandardMaterial color="#44aa33" />
-          </mesh>
-        </group>
-      ))}
-
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[3, 5, 2]} intensity={0.8} color="#fff8e0" />
-      <pointLight position={[0, 2, -1]} intensity={0.5} color="#aaeeff" />
+      <ambientLight intensity={0.15} />
+      <pointLight position={[0, 3, -2]} intensity={1} color="#88ccff" distance={8} />
+      <pointLight position={[-2, 1, -1]} intensity={0.5} color="#66ffcc" distance={5} />
+      <pointLight position={[2, 2, -3]} intensity={0.5} color="#cc88ff" distance={5} />
     </group>
   )
 }
 
-function FloatingCrystal({ position, color }: { position: [number, number, number]; color: string }) {
+function GlowTree({ position, index }: { position: [number, number, number]; index: number }) {
+  const colors = ['#66ffcc', '#44aaff', '#cc88ff', '#ffaa66', '#ff88cc']
+  const glowColor = colors[index % colors.length]
+  const ref = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (!ref.current) return
+    // Gentle sway
+    ref.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3 + index) * 0.02
+  })
+
+  return (
+    <group ref={ref} position={position}>
+      {/* Trunk */}
+      <mesh position={[0, 0.6, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.07, 1.2, 12]} />
+        <meshStandardMaterial color="#2a1a0a" roughness={0.95} />
+      </mesh>
+      {/* Canopy — glowing */}
+      <mesh position={[0, 1.4, 0]}>
+        <sphereGeometry args={[0.35, 24, 24]} />
+        <meshStandardMaterial
+          color={glowColor}
+          emissive={glowColor}
+          emissiveIntensity={0.4}
+          roughness={0.6}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+      {/* Inner glow light */}
+      <pointLight position={[0, 1.4, 0]} color={glowColor} intensity={0.3} distance={2} />
+    </group>
+  )
+}
+
+function FloatingOrb({ position, color, speed }: {
+  position: [number, number, number]
+  color: string
+  speed: number
+}) {
   const ref = useRef<THREE.Mesh>(null)
 
   useFrame((state) => {
     if (!ref.current) return
-    const t = state.clock.elapsedTime
-    ref.current.position.y = position[1] + Math.sin(t * 1.5 + position[0]) * 0.1
-    ref.current.rotation.y = t * 0.5
+    const t = state.clock.elapsedTime * speed
+    ref.current.position.y = position[1] + Math.sin(t) * 0.15
+    ref.current.position.x = position[0] + Math.sin(t * 0.7) * 0.05
   })
 
   return (
     <mesh ref={ref} position={position}>
-      <octahedronGeometry args={[0.08, 0]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.3} roughness={0.2} metalness={0.8} />
+      <sphereGeometry args={[0.025, 12, 12]} />
+      <meshBasicMaterial color={color} transparent opacity={0.8} />
+    </mesh>
+  )
+}
+
+function FogParticle({ index }: { index: number }) {
+  const ref = useRef<THREE.Mesh>(null)
+  const startX = (Math.random() - 0.5) * 6
+  const startZ = -1 - Math.random() * 4
+  const startY = Math.random() * 0.5
+
+  useFrame((state) => {
+    if (!ref.current) return
+    const t = state.clock.elapsedTime * 0.15 + index * 0.5
+    ref.current.position.x = startX + Math.sin(t) * 0.3
+    ref.current.position.y = startY + Math.sin(t * 1.3) * 0.1
+    ref.current.position.z = startZ + Math.cos(t * 0.7) * 0.2
+    ;(ref.current.material as THREE.MeshBasicMaterial).opacity = 0.03 + Math.sin(t * 2) * 0.015
+  })
+
+  return (
+    <mesh ref={ref} position={[startX, startY, startZ]}>
+      <planeGeometry args={[0.4, 0.4]} />
+      <meshBasicMaterial color="#88ccff" transparent opacity={0.03} side={THREE.DoubleSide} depthWrite={false} />
     </mesh>
   )
 }
 
 // ============================================================
-// PHYSICS OBJECTS (can be spawned and interact with real world)
+// GLASS PHYSICS OBJECTS
 // ============================================================
 
 interface SpawnedObject {
   id: string
-  type: 'ball' | 'box' | 'crystal'
+  type: 'sphere' | 'cube' | 'gem'
   position: [number, number, number]
   color: string
 }
 
-const COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#9b59b6', '#ff8a5c', '#44ddff', '#ff44dd']
+const PALETTE = [
+  '#f472b6', '#a78bfa', '#60a5fa', '#34d399',
+  '#fbbf24', '#fb923c', '#f87171', '#c084fc',
+]
 
-function PhysicsBall({ position, color }: { position: [number, number, number]; color: string }) {
+function GlassSphere({ position, color }: { position: [number, number, number]; color: string }) {
   return (
-    <RigidBody type="dynamic" position={position} collider="ball" args={[0.08]} restitution={0.8} mass={0.3}>
+    <RigidBody type="dynamic" position={position} collider="ball" args={[0.06]} restitution={0.85} mass={0.3}>
       <mesh castShadow>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color={color} roughness={0.2} metalness={0.3} />
+        <sphereGeometry args={[0.06, 32, 32]} />
+        <meshPhysicalMaterial
+          color={color}
+          roughness={0.05}
+          metalness={0.1}
+          clearcoat={1}
+          clearcoatRoughness={0.05}
+          transmission={0.3}
+          thickness={0.5}
+          ior={1.5}
+        />
       </mesh>
     </RigidBody>
   )
 }
 
-function PhysicsBox({ position, color }: { position: [number, number, number]; color: string }) {
+function GlassCube({ position, color }: { position: [number, number, number]; color: string }) {
   return (
-    <RigidBody type="dynamic" position={position} collider="cuboid" args={[0.06, 0.06, 0.06]} restitution={0.4} mass={0.5}>
+    <RigidBody type="dynamic" position={position} collider="cuboid" args={[0.05, 0.05, 0.05]} restitution={0.4} mass={0.5}>
       <mesh castShadow>
-        <boxGeometry args={[0.12, 0.12, 0.12]} />
-        <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
+        <boxGeometry args={[0.1, 0.1, 0.1]} />
+        <meshPhysicalMaterial
+          color={color}
+          roughness={0.1}
+          metalness={0.3}
+          clearcoat={0.8}
+          clearcoatRoughness={0.1}
+        />
       </mesh>
     </RigidBody>
   )
 }
 
-function PhysicsCrystal({ position, color }: { position: [number, number, number]; color: string }) {
+function GlassGem({ position, color }: { position: [number, number, number]; color: string }) {
   return (
-    <RigidBody type="dynamic" position={position} collider="ball" args={[0.06]} restitution={0.9} mass={0.2}>
-      <mesh castShadow>
-        <octahedronGeometry args={[0.06, 0]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.2} roughness={0.1} metalness={0.9} />
-      </mesh>
+    <RigidBody type="dynamic" position={position} collider="ball" args={[0.05]} restitution={0.9} mass={0.2}>
+      <Float speed={0} floatIntensity={0}>
+        <mesh castShadow>
+          <octahedronGeometry args={[0.05, 0]} />
+          <meshPhysicalMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.15}
+            roughness={0.02}
+            metalness={0.9}
+            clearcoat={1}
+            clearcoatRoughness={0}
+          />
+        </mesh>
+      </Float>
     </RigidBody>
   )
 }
 
 // ============================================================
-// HAND PHYSICS CONTROLLER
+// HAND PHYSICS + COLLIDERS
 // ============================================================
 
 function HandPhysicsController() {
@@ -161,21 +234,17 @@ function HandPhysicsController() {
   return null
 }
 
-// ============================================================
-// REAL WORLD COLLIDERS (from detected planes)
-// ============================================================
-
 function WorldColliders() {
   const { planes } = usePlanes({ filter: 'all' })
   return <RealWorldCollider source="planes" planes={planes} friction={0.7} restitution={0.3} />
 }
 
 // ============================================================
-// CONTROL PANEL (spatial UI)
+// GLASS CONTROL PANEL
 // ============================================================
 
 function ControlPanel({ onSpawn, objectCount }: {
-  onSpawn: (type: 'ball' | 'box' | 'crystal') => void
+  onSpawn: (type: 'sphere' | 'cube' | 'gem') => void
   objectCount: number
 }) {
   const [gravityStrength, setGravityStrength] = useState(1)
@@ -189,94 +258,45 @@ function ControlPanel({ onSpawn, objectCount }: {
 
   return (
     <Panel
-      position={[0.6, 1.5, -0.8]}
-      width={0.4}
-      height={0.5}
-      backgroundColor="#0a0a1a"
-      backgroundOpacity={0.92}
+      position={[0.55, 1.5, -0.7]}
+      width={0.38}
+      height={0.46}
+      backgroundColor="#0d0d1a"
+      backgroundOpacity={0.88}
     >
-      {/* Title */}
-      <Text position={[-0.16, 0.2, 0]} fontSize={0.022} color="#ffffff" bold>
+      <Text position={[-0.15, 0.18, 0]} fontSize={0.019} color="#e0e7ff" bold>
         Control Panel
       </Text>
 
-      {/* Spawn buttons */}
-      <Text position={[-0.16, 0.15, 0]} fontSize={0.011} color="#888888">
+      <Text position={[-0.15, 0.135, 0]} fontSize={0.009} color="#64748b">
         Spawn Objects
       </Text>
-      <Button
-        position={[-0.12, 0.1, 0]}
-        width={0.08}
-        height={0.03}
-        color="#cc3333"
-        hoverColor="#ff4444"
-        fontSize={0.011}
-        onSelect={() => onSpawn('ball')}
-      >
-        Ball
+
+      <Button position={[-0.1, 0.095, 0]} width={0.07} height={0.028} color="#3f1a28" hoverColor="#7f2450" fontSize={0.009} onSelect={() => onSpawn('sphere')}>
+        Sphere
       </Button>
-      <Button
-        position={[0, 0.1, 0]}
-        width={0.08}
-        height={0.03}
-        color="#3333cc"
-        hoverColor="#4444ff"
-        fontSize={0.011}
-        onSelect={() => onSpawn('box')}
-      >
-        Box
+      <Button position={[0, 0.095, 0]} width={0.07} height={0.028} color="#1a2840" hoverColor="#244080" fontSize={0.009} onSelect={() => onSpawn('cube')}>
+        Cube
       </Button>
-      <Button
-        position={[0.12, 0.1, 0]}
-        width={0.08}
-        height={0.03}
-        color="#cc33cc"
-        hoverColor="#ff44ff"
-        fontSize={0.011}
-        onSelect={() => onSpawn('crystal')}
-      >
-        Crystal
+      <Button position={[0.1, 0.095, 0]} width={0.07} height={0.028} color="#2a1a40" hoverColor="#4a2480" fontSize={0.009} onSelect={() => onSpawn('gem')}>
+        Gem
       </Button>
 
-      {/* Gravity slider */}
-      <Slider
-        position={[-0.16, 0.03, 0]}
-        value={gravityStrength}
-        onChange={handleGravityChange}
-        min={0}
-        max={2}
-        step={0.1}
-        width={0.3}
-        label="Gravity"
-      />
+      <Slider position={[-0.15, 0.03, 0]} value={gravityStrength} onChange={handleGravityChange} min={0} max={2} step={0.05} width={0.28} label="Gravity" fillColor="#818cf8" />
 
-      {/* Show planes toggle */}
-      <Toggle
-        position={[-0.16, -0.05, 0]}
-        checked={showPlanes}
-        onChange={setShowPlanes}
-        label="Show Planes"
-      />
+      <Toggle position={[-0.15, -0.04, 0]} checked={showPlanes} onChange={setShowPlanes} label="Plane Overlay" activeColor="#818cf8" />
 
-      {/* Object count */}
-      <ProgressBar
-        position={[-0.16, -0.12, 0]}
-        value={Math.min(1, objectCount / 30)}
-        width={0.3}
-        label={`Objects: ${objectCount}`}
-        color="#44cc88"
-      />
+      <ProgressBar position={[-0.15, -0.1, 0]} value={Math.min(1, objectCount / 30)} width={0.28} label={`Objects: ${objectCount}`} color="#34d399" trackColor="#1e293b" />
 
-      {/* Gesture hint */}
-      <Text position={[-0.16, -0.19, 0]} fontSize={0.009} color="#555555" maxWidth={0.35}>
-        Pinch to grab objects. Open palm to push. Point to aim.
+      <Text position={[-0.15, -0.17, 0]} fontSize={0.008} color="#475569" maxWidth={0.32}>
+        Pinch to grab. Open palm to push. Adjust gravity to float.
       </Text>
     </Panel>
   )
 }
 
 // ============================================================
-// AUDIO SETUP
+// AUDIO + GESTURE FEEDBACK
 // ============================================================
 
 function AudioSetup() {
@@ -284,30 +304,54 @@ function AudioSetup() {
   return null
 }
 
-// ============================================================
-// GESTURE FEEDBACK (visual indicators)
-// ============================================================
-
 function GestureFeedback() {
   const rightPinch = useGesture('pinch', { hand: 'right' })
   const leftPinch = useGesture('pinch', { hand: 'left' })
 
   return (
     <>
-      {/* Pinch indicators — glow spheres at pinch point */}
       {rightPinch.active && rightPinch.position && (
         <mesh position={rightPinch.position}>
-          <sphereGeometry args={[0.015, 8, 8]} />
-          <meshBasicMaterial color="#00ffaa" transparent opacity={0.6} />
+          <sphereGeometry args={[0.012, 12, 12]} />
+          <meshBasicMaterial color="#a78bfa" transparent opacity={0.7} />
         </mesh>
       )}
       {leftPinch.active && leftPinch.position && (
         <mesh position={leftPinch.position}>
-          <sphereGeometry args={[0.015, 8, 8]} />
-          <meshBasicMaterial color="#00aaff" transparent opacity={0.6} />
+          <sphereGeometry args={[0.012, 12, 12]} />
+          <meshBasicMaterial color="#60a5fa" transparent opacity={0.7} />
         </mesh>
       )}
     </>
+  )
+}
+
+// ============================================================
+// AMBIENT ENVIRONMENT (floating particles, ground)
+// ============================================================
+
+function AmbientParticles() {
+  const ref = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (!ref.current) return
+    ref.current.rotation.y = state.clock.elapsedTime * 0.02
+  })
+
+  return (
+    <group ref={ref}>
+      {Array.from({ length: 50 }).map((_, i) => {
+        const theta = Math.random() * Math.PI * 2
+        const r = 2 + Math.random() * 4
+        const y = Math.random() * 3
+        return (
+          <mesh key={i} position={[Math.cos(theta) * r, y, Math.sin(theta) * r]}>
+            <sphereGeometry args={[0.004, 4, 4]} />
+            <meshBasicMaterial color="#c4b5fd" transparent opacity={0.3 + Math.random() * 0.2} />
+          </mesh>
+        )
+      })}
+    </group>
   )
 }
 
@@ -317,29 +361,25 @@ function GestureFeedback() {
 
 function XRContent({ objects, onSpawn }: {
   objects: SpawnedObject[]
-  onSpawn: (type: 'ball' | 'box' | 'crystal') => void
+  onSpawn: (type: 'sphere' | 'cube' | 'gem') => void
 }) {
-  const { planes } = usePlanes({ filter: 'all' })
-
   return (
     <XRScene>
       <XROrigin />
 
-      {/* === HANDS === */}
-      <HandModel hand="left" model="spheres" color="#00ffaa" opacity={0.7} />
-      <HandModel hand="right" model="spheres" color="#00aaff" opacity={0.7} />
-      <HandRay hand="right" color="#00aaff" opacity={0.2} maxLength={5} />
+      {/* === HANDS (soft translucent) === */}
+      <HandModel hand="left" model="spheres" color="#a78bfa" opacity={0.5} jointSize={0.004} />
+      <HandModel hand="right" model="spheres" color="#60a5fa" opacity={0.5} jointSize={0.004} />
+      <HandRay hand="right" color="#818cf8" opacity={0.15} maxLength={5} />
 
-      {/* === PORTAL === */}
+      {/* === PORTAL to ethereal world === */}
       <Portal
-        position={[0, 1, -2.5]}
-        rotation={[0, 0, 0]}
-        size={[1.4, 2]}
-        borderColor="#44ddff"
-        borderWidth={0.025}
-        onEnter={() => console.log('Entered cartoon world!')}
+        position={[0, 1.1, -2.8]}
+        size={[1.3, 1.9]}
+        borderColor="#818cf8"
+        borderWidth={0.015}
       >
-        <CartoonWorld />
+        <EtherealWorld />
       </Portal>
 
       {/* === PHYSICS === */}
@@ -347,62 +387,77 @@ function XRContent({ objects, onSpawn }: {
         <HandPhysicsController />
         <WorldColliders />
 
-        {/* Spawned objects */}
         {objects.map(obj => {
           switch (obj.type) {
-            case 'ball': return <PhysicsBall key={obj.id} position={obj.position} color={obj.color} />
-            case 'box': return <PhysicsBox key={obj.id} position={obj.position} color={obj.color} />
-            case 'crystal': return <PhysicsCrystal key={obj.id} position={obj.position} color={obj.color} />
+            case 'sphere': return <GlassSphere key={obj.id} position={obj.position} color={obj.color} />
+            case 'cube': return <GlassCube key={obj.id} position={obj.position} color={obj.color} />
+            case 'gem': return <GlassGem key={obj.id} position={obj.position} color={obj.color} />
           }
         })}
 
-        {/* Invisible floor for desktop / non-AR */}
-        <RigidBody type="fixed" position={[0, -0.01, 0]} collider="cuboid" args={[5, 0.01, 5]}>
-          <mesh>
-            <boxGeometry args={[10, 0.02, 10]} />
-            <meshStandardMaterial color="#222222" transparent opacity={0.15} />
+        {/* Ground plane */}
+        <RigidBody type="fixed" position={[0, -0.005, 0]} collider="cuboid" args={[5, 0.005, 5]}>
+          <mesh receiveShadow>
+            <boxGeometry args={[10, 0.01, 10]} />
+            <meshStandardMaterial color="#0f0f1a" roughness={0.95} metalness={0.05} />
           </mesh>
         </RigidBody>
 
-        {/* === SPATIAL UI (inside PhysicsWorld for gravity control) === */}
+        {/* Spatial UI (inside PhysicsWorld for gravity) */}
         <UIProvider>
-          <GazePointer size={0.004} color="#ffffff" />
+          <GazePointer size={0.003} color="#e0e7ff" />
           <ControlPanel onSpawn={onSpawn} objectCount={objects.length} />
         </UIProvider>
       </PhysicsWorld>
 
-      {/* === PLANE VISUALIZATION === */}
-      <PlaneOverlay filter="all" color="#00aaff" opacity={0.08} />
-
-      {/* === GESTURE FEEDBACK === */}
+      {/* === SPATIAL OVERLAYS === */}
+      <PlaneOverlay filter="all" color="#818cf8" opacity={0.04} />
       <GestureFeedback />
-
-      {/* === GUARDIAN === */}
-      <Guardian radius={3} color="#ff4444" fadeDistance={0.6} />
-
-      {/* === AUDIO === */}
+      <Guardian radius={3} color="#818cf8" fadeDistance={0.8} />
       <AudioSetup />
 
-      {/* === LIGHTING === */}
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[3, 6, 3]} intensity={0.8} castShadow />
-      <pointLight position={[-2, 3, 1]} intensity={0.3} color="#4488ff" />
-      <pointLight position={[2, 3, -1]} intensity={0.3} color="#ff8844" />
+      {/* === LIGHTING — soft, directional, cinematic === */}
+      <ambientLight intensity={0.25} />
+      <directionalLight
+        position={[4, 8, 4]}
+        intensity={0.6}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-far={20}
+        shadow-camera-near={0.1}
+        shadow-camera-left={-5}
+        shadow-camera-right={5}
+        shadow-camera-top={5}
+        shadow-camera-bottom={-5}
+        shadow-bias={-0.001}
+        color="#e0e7ff"
+      />
+      <pointLight position={[-3, 2, 2]} intensity={0.15} color="#818cf8" distance={8} />
+      <pointLight position={[3, 2, -2]} intensity={0.15} color="#f472b6" distance={8} />
+
+      {/* Soft ambient glow from below */}
+      <pointLight position={[0, -0.5, 0]} intensity={0.08} color="#818cf8" distance={6} />
 
       {/* === ENVIRONMENT === */}
-      <gridHelper args={[10, 20, '#333344', '#222233']} />
+      <AmbientParticles />
+      <Environment preset="night" />
+      <fog attach="fog" args={['#080810', 4, 14]} />
 
-      {/* Desktop orbit controls */}
-      <OrbitControls target={[0, 1, -1]} />
+      {/* Subtle ground grid */}
+      <gridHelper args={[12, 48, '#1a1a2e', '#12121e']} position={[0, 0.001, 0]} />
+
+      {/* Desktop controls */}
+      <OrbitControls target={[0, 1, -1.2]} enableDamping dampingFactor={0.05} />
     </XRScene>
   )
 }
 
 // ============================================================
-// HTML UI OVERLAY
+// HTML UI (visionOS glass)
 // ============================================================
 
-function UI({ onSpawn }: { onSpawn: (type: 'ball' | 'box' | 'crystal') => void }) {
+function UI({ onSpawn }: { onSpawn: (type: 'sphere' | 'cube' | 'gem') => void }) {
   const { start, isActive } = useXRSession()
   const support = useXRSupport()
 
@@ -413,6 +468,9 @@ function UI({ onSpawn }: { onSpawn: (type: 'ball' | 'box' | 'crystal') => void }
       <div className="title-overlay">
         <h1>Mixed Reality Playground</h1>
         <p>Where virtual objects meet your real world</p>
+      </div>
+      <div className="status-pill">
+        <span>Ready</span> &middot; Desktop Preview
       </div>
       <div className="ui-overlay">
         {support.ar && (
@@ -425,14 +483,14 @@ function UI({ onSpawn }: { onSpawn: (type: 'ball' | 'box' | 'crystal') => void }
             Enter VR
           </button>
         )}
-        <button className="xr-button" style={{ background: 'linear-gradient(135deg, #ff6b6b, #ee5a24)' }} onClick={() => onSpawn('ball')}>
-          Spawn Ball
+        <button className="xr-button spawn-ball" onClick={() => onSpawn('sphere')}>
+          Sphere
         </button>
-        <button className="xr-button" style={{ background: 'linear-gradient(135deg, #4d96ff, #3333cc)' }} onClick={() => onSpawn('box')}>
-          Spawn Box
+        <button className="xr-button spawn-box" onClick={() => onSpawn('cube')}>
+          Cube
         </button>
-        <button className="xr-button" style={{ background: 'linear-gradient(135deg, #ff44dd, #9b59b6)' }} onClick={() => onSpawn('crystal')}>
-          Spawn Crystal
+        <button className="xr-button spawn-crystal" onClick={() => onSpawn('gem')}>
+          Gem
         </button>
       </div>
     </>
@@ -447,32 +505,25 @@ export default function App() {
   const [objects, setObjects] = useState<SpawnedObject[]>([])
   const countRef = useRef(0)
 
-  const spawn = useCallback((type: 'ball' | 'box' | 'crystal') => {
+  const spawn = useCallback((type: 'sphere' | 'cube' | 'gem') => {
     const id = `obj-${countRef.current++}`
-    const color = COLORS[countRef.current % COLORS.length]
-    // Spawn in front and above, slightly random
-    const x = (Math.random() - 0.5) * 1.5
-    const z = -1 - Math.random() * 1
-    const position: [number, number, number] = [x, 2, z]
+    const color = PALETTE[countRef.current % PALETTE.length]
+    const x = (Math.random() - 0.5) * 1.2
+    const z = -0.8 - Math.random() * 0.8
+    const position: [number, number, number] = [x, 1.8, z]
     setObjects(prev => [...prev, { id, type, position, color }])
   }, [])
 
   return (
     <XRProvider
-      features={[
-        'hand-tracking',
-        'plane-detection',
-        'hit-test',
-        'anchors',
-        'mesh-detection',
-        'local-floor',
-      ]}
+      features={['hand-tracking', 'plane-detection', 'hit-test', 'anchors', 'mesh-detection', 'local-floor']}
       onError={(err) => console.error('XR Error:', err)}
     >
       <div style={{ width: '100vw', height: '100vh' }}>
         <Canvas
-          camera={{ position: [1.5, 1.8, 2.5], fov: 60 }}
+          camera={{ position: [1.2, 1.6, 2.2], fov: 55 }}
           shadows
+          gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
         >
           <XRContent objects={objects} onSpawn={spawn} />
         </Canvas>
