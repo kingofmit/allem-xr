@@ -16,3 +16,19 @@ export type {
   GestureOptions,
   HandModelProps,
 } from './types'
+
+// New hooks
+export { useCustomGesture } from './hooks/useCustomGesture'
+export type { CustomGestureConfig, CustomGestureResult } from './hooks/useCustomGesture'
+export { usePinchInteraction } from './hooks/usePinchInteraction'
+export { useGrabInteraction } from './hooks/useGrabInteraction'
+
+// New components
+export { HandRay } from './components/HandRay'
+
+// New types
+export type {
+  PinchInteractionOptions,
+  GrabInteractionOptions,
+  HandRayProps,
+} from './types'
