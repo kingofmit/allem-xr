@@ -11,9 +11,11 @@ interface UseCollisionOptions {
   onCollisionExit?: (event: CollisionEvent) => void
 }
 
-// Cached vectors
+// Cached vectors — avoid frame-loop allocations
 const _contactPoint = new Vector3()
 const _normal = new Vector3()
+const _exitContactPoint = new Vector3()
+const _exitNormal = new Vector3(0, 1, 0)
 
 /**
  * Detect collisions for a named rigid body.
@@ -23,7 +25,9 @@ export function useCollision(bodyName: string, options: UseCollisionOptions) {
   const { world, ready, bodies } = usePhysicsContext()
   const optionsRef = useRef(options)
   optionsRef.current = options
-  const activeContactsRef = useRef<Set<number>>(new Set())
+  // Double-buffered contact sets — swap each frame to avoid allocating a new Set
+  const contactSetsRef = useRef<[Set<number>, Set<number>]>([new Set(), new Set()])
+  const activeSetIndexRef = useRef(0)
 
   useFrame(() => {
     if (!world || !ready) return
@@ -31,7 +35,10 @@ export function useCollision(bodyName: string, options: UseCollisionOptions) {
     const body = bodies.get(bodyName)
     if (!body) return
 
-    const newContacts = new Set<number>()
+    const activeIndex = activeSetIndexRef.current
+    const activeContacts = contactSetsRef.current[activeIndex]
+    const newContacts = contactSetsRef.current[1 - activeIndex]
+    newContacts.clear()
     const numColliders = body.numColliders()
 
     for (let ci = 0; ci < numColliders; ci++) {
@@ -43,7 +50,7 @@ export function useCollision(bodyName: string, options: UseCollisionOptions) {
 
         newContacts.add(otherBody.handle)
 
-        if (!activeContactsRef.current.has(otherBody.handle)) {
+        if (!activeContacts.has(otherBody.handle)) {
           // Find other body name via reverse lookup
           let otherName = ''
           for (const [name, b] of bodies) {
@@ -93,7 +100,7 @@ export function useCollision(bodyName: string, options: UseCollisionOptions) {
     }
 
     // Fire exit events for contacts that ended
-    for (const handle of activeContactsRef.current) {
+    for (const handle of activeContacts) {
       if (!newContacts.has(handle)) {
         let otherName = ''
         for (const [name, b] of bodies) {
@@ -102,15 +109,18 @@ export function useCollision(bodyName: string, options: UseCollisionOptions) {
             break
           }
         }
+        _exitContactPoint.set(0, 0, 0)
+        _exitNormal.set(0, 1, 0)
         optionsRef.current.onCollisionExit?.({
           other: otherName,
-          contactPoint: new Vector3(),
-          normal: new Vector3(0, 1, 0),
+          contactPoint: _exitContactPoint,
+          normal: _exitNormal,
           impulse: 0,
         })
       }
     }
 
-    activeContactsRef.current = newContacts
+    // Swap: newContacts becomes the active set next frame
+    activeSetIndexRef.current = 1 - activeIndex
   })
 }

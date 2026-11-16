@@ -37,8 +37,9 @@ export function AvatarMirror({
   useEffect(() => {
     return () => {
       renderTarget.dispose()
+      mirrorCamera.clear()
     }
-  }, [renderTarget])
+  }, [renderTarget, mirrorCamera])
 
   useFrame(() => {
     if (!meshRef.current) return

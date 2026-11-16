@@ -12,22 +12,47 @@ const CYAN = '\x1b[36m'
 const DIM = '\x1b[2m'
 const RESET = '\x1b[0m'
 
+function getVersion(): string {
+  const pkgPath = resolve(__dirname, '..', 'package.json')
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+  return pkg.version
+}
+
 function main() {
   const args = process.argv.slice(2)
-  const projectName = args[0]
 
-  if (!projectName || projectName === '--help' || projectName === '-h') {
+  // Handle --version / -v
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(getVersion())
+    process.exit(0)
+  }
+
+  const flags = args.filter(a => a.startsWith('-'))
+  const positional = args.filter(a => !a.startsWith('-'))
+  const projectName = positional[0]
+
+  if (!projectName || flags.includes('--help') || flags.includes('-h')) {
     console.log(`
-${BOLD}create-allem-xr${RESET} — scaffold a new mixed reality app
+${BOLD}create-allem-xr${RESET} v${getVersion()} — scaffold a new mixed reality app
 
 ${BOLD}Usage:${RESET}
-  npx create-allem-xr ${CYAN}<project-name>${RESET}
+  npx create-allem-xr ${CYAN}<project-name>${RESET} [options]
+
+${BOLD}Options:${RESET}
+  --ar          Scaffold with AR as the default mode (default)
+  --vr          Scaffold with VR as the default mode
+  -v, --version Print version number
+  -h, --help    Show this help message
 
 ${BOLD}Example:${RESET}
   npx create-allem-xr my-xr-app
+  npx create-allem-xr my-vr-game --vr
   cd my-xr-app
   npm install
   npm run dev
+
+${DIM}The generated template includes buttons for both AR and VR modes
+regardless of which flag you pass.${RESET}
 `)
     process.exit(projectName ? 0 : 1)
   }
