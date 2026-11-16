@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Text } from '@react-three/drei'
+import { Text, OrbitControls } from '@react-three/drei'
 import { XRProvider, XRScene, XROrigin, useXRSession, useXRSupport } from '@allem-xr/core'
 import { HandModel, useGesture } from '@allem-xr/hands'
 import { useHitTest, usePlanes, PlaneOverlay, useAnchor } from '@allem-xr/spatial'
@@ -137,6 +137,10 @@ function XRContent({ notes, onCreateNote }: {
       {/* Lighting */}
       <ambientLight intensity={0.8} />
       <directionalLight position={[2, 5, 3]} intensity={0.6} />
+
+      {/* Desktop: grid + orbit controls */}
+      <gridHelper args={[10, 20, '#444444', '#222222']} />
+      <OrbitControls target={[0, 1, 0]} />
     </XRScene>
   )
 }
@@ -187,7 +191,7 @@ export default function App() {
       onError={(err) => console.error('XR Error:', err)}
     >
       <div style={{ width: '100vw', height: '100vh' }}>
-        <Canvas>
+        <Canvas camera={{ position: [0, 1.5, 3], fov: 60 }}>
           <XRContent notes={notes} onCreateNote={handleCreateNote} />
         </Canvas>
         <UI noteCount={notes.length} />

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
 import { XRProvider, XRScene, XROrigin, useXRSession, useXRSupport } from '@allem-xr/core'
 import { HandModel } from '@allem-xr/hands'
 import { usePlanes, PlaneOverlay } from '@allem-xr/spatial'
@@ -17,9 +18,9 @@ const COLORS = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#9b59b6', '#ff8a5c'
 
 function PhysicsBall({ position, color }: { position: [number, number, number]; color: string }) {
   return (
-    <RigidBody type="dynamic" position={position} collider="ball" args={[0.04]} restitution={0.7} mass={0.2}>
-      <mesh>
-        <sphereGeometry args={[0.04, 16, 16]} />
+    <RigidBody type="dynamic" position={position} collider="ball" args={[0.15]} restitution={0.7} mass={0.5}>
+      <mesh castShadow>
+        <sphereGeometry args={[0.15, 16, 16]} />
         <meshStandardMaterial color={color} roughness={0.3} metalness={0.1} />
       </mesh>
     </RigidBody>
@@ -28,9 +29,9 @@ function PhysicsBall({ position, color }: { position: [number, number, number]; 
 
 function PhysicsBox({ position, color }: { position: [number, number, number]; color: string }) {
   return (
-    <RigidBody type="dynamic" position={position} collider="cuboid" args={[0.03, 0.03, 0.03]} restitution={0.3} mass={0.5}>
-      <mesh>
-        <boxGeometry args={[0.06, 0.06, 0.06]} />
+    <RigidBody type="dynamic" position={position} collider="cuboid" args={[0.1, 0.1, 0.1]} restitution={0.3} mass={1}>
+      <mesh castShadow>
+        <boxGeometry args={[0.2, 0.2, 0.2]} />
         <meshStandardMaterial color={color} roughness={0.4} metalness={0.2} />
       </mesh>
     </RigidBody>
@@ -53,7 +54,7 @@ function XRContent({ objects }: { objects: SpawnedObject[] }) {
     <XRScene>
       <XROrigin />
 
-      {/* Hands */}
+      {/* Hands (only visible in XR) */}
       <HandModel hand="left" color="#00ffaa" />
       <HandModel hand="right" color="#00aaff" />
 
@@ -75,7 +76,7 @@ function XRContent({ objects }: { objects: SpawnedObject[] }) {
         <RigidBody type="fixed" position={[0, 0, 0]} collider="cuboid" args={[5, 0.005, 5]}>
           <mesh>
             <boxGeometry args={[10, 0.01, 10]} />
-            <meshStandardMaterial color="#333" transparent opacity={0.3} />
+            <meshStandardMaterial color="#444444" transparent opacity={0.5} />
           </mesh>
         </RigidBody>
       </PhysicsWorld>
@@ -88,7 +89,10 @@ function XRContent({ objects }: { objects: SpawnedObject[] }) {
       <directionalLight position={[5, 8, 3]} intensity={1} castShadow />
 
       {/* Grid for orientation */}
-      <gridHelper args={[10, 20, '#333', '#222']} />
+      <gridHelper args={[10, 20, '#555555', '#333333']} />
+
+      {/* Desktop camera controls (disabled in XR) */}
+      <OrbitControls target={[0, 0.5, 0]} />
     </XRScene>
   )
 }
@@ -133,10 +137,10 @@ export default function App() {
   const spawn = useCallback((type: 'ball' | 'box') => {
     const id = `obj-${countRef.current++}`
     const color = COLORS[countRef.current % COLORS.length]
-    // Spawn above the user's head area
-    const x = (Math.random() - 0.5) * 0.4
-    const z = -0.5 - Math.random() * 0.5
-    const position: [number, number, number] = [x, 1.8, z]
+    // Spawn in view of the default camera
+    const x = (Math.random() - 0.5) * 1.5
+    const z = (Math.random() - 0.5) * 1.5
+    const position: [number, number, number] = [x, 2, z]
 
     setObjects(prev => [...prev, { id, type, position, color }])
   }, [])
@@ -147,7 +151,7 @@ export default function App() {
       onError={(err) => console.error('XR Error:', err)}
     >
       <div style={{ width: '100vw', height: '100vh' }}>
-        <Canvas shadows>
+        <Canvas shadows camera={{ position: [2, 2, 3], fov: 60 }}>
           <XRContent objects={objects} />
         </Canvas>
         <UI onSpawn={spawn} />
