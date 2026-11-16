@@ -1,8 +1,38 @@
-export { XRProvider, XRContext } from "./XRProvider";
-export type { XRProviderProps } from "./XRProvider";
+// Components
+export { XRProvider } from './XRProvider'
+export type { XRProviderProps } from './XRProvider'
+export { XRScene } from './XRScene'
+export type { XRSceneProps } from './XRScene'
+export { XROrigin } from './XROrigin'
+export type { XROriginProps } from './XROrigin'
 
-export { useXR } from "./hooks/useXR";
-export { useSession } from "./hooks/useSession";
-export type { UseSessionReturn } from "./hooks/useSession";
+// Hooks
+export { useXR } from './hooks/useXR'
+export { useXRSession } from './hooks/useXRSession'
+export { useXREvent } from './hooks/useXREvent'
+export { useXRSupport } from './hooks/useXRSupport'
+export { useXRInput } from './hooks/useXRInput'
+export { useXRFrame } from './hooks/useXRFrame'
 
-export type { XRMode, XRSessionState, XRConfig, XRContextValue } from "./types";
+// Context (for advanced use / other packages)
+export { XRContext, useXRContext } from './context'
+
+// Types
+export type {
+  XRMode,
+  XRSessionState,
+  XRInputType,
+  XRHandedness,
+  XRFeatureDescriptor,
+  XRProviderConfig,
+  XRInputAbstraction,
+  XRState,
+  XRActions,
+  XRContextValue,
+  XRSupport,
+  XREventOptions,
+  XRContextInternal,
+} from './types'
+
+// Errors (for other packages)
+export { featureError, providerError } from './errors'

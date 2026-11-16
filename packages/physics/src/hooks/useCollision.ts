@@ -1,27 +1,63 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
-import type { CollisionEvent } from "../types";
+import { useRef } from 'react'
+import { Vector3 } from 'three'
+import { useFrame } from '@react-three/fiber'
+import { usePhysicsContext } from '../context'
+import type { CollisionEvent } from '../types'
+
+interface UseCollisionOptions {
+  onCollisionEnter?: (event: CollisionEvent) => void
+}
 
 /**
- * Hook for listening to collision events in the physics world.
- *
- * @param callback - Function called when a collision occurs
- *
- * @example
- * ```tsx
- * useCollision((event) => {
- *   console.log(`${event.bodyA} hit ${event.bodyB}`);
- * });
- * ```
+ * Detect collisions for a named rigid body.
+ * Uses Rapier's contactPairsWith to detect contacts each frame.
  */
-export function useCollision(callback: (event: CollisionEvent) => void): void {
-  useEffect(() => {
-    // Register a collision listener with the physics world.
-    // The callback fires for each contact pair each simulation step.
+export function useCollision(bodyName: string, options: UseCollisionOptions) {
+  const { world, ready, bodies } = usePhysicsContext()
+  const optionsRef = useRef(options)
+  optionsRef.current = options
+  const activeContactsRef = useRef<Set<number>>(new Set())
 
-    return () => {
-      // Unregister the collision listener.
-    };
-  }, [callback]);
+  useFrame(() => {
+    if (!world || !ready) return
+
+    const body = bodies.get(bodyName)
+    if (!body) return
+
+    const newContacts = new Set<number>()
+    const numColliders = body.numColliders()
+
+    for (let ci = 0; ci < numColliders; ci++) {
+      const collider = body.collider(ci)
+
+      world.contactPairsWith(collider, (otherCollider: any) => {
+        const otherBody = otherCollider.parent()
+        if (!otherBody || otherBody.handle === body.handle) return
+
+        newContacts.add(otherBody.handle)
+
+        if (!activeContactsRef.current.has(otherBody.handle)) {
+          let otherName = ''
+          for (const [name, b] of bodies) {
+            if (b.handle === otherBody.handle) {
+              otherName = name
+              break
+            }
+          }
+
+          const pos = otherBody.translation()
+          optionsRef.current.onCollisionEnter?.({
+            other: otherName,
+            contactPoint: new Vector3(pos.x, pos.y, pos.z),
+            normal: new Vector3(0, 1, 0),
+            impulse: 0,
+          })
+        }
+      })
+    }
+
+    activeContactsRef.current = newContacts
+  })
 }

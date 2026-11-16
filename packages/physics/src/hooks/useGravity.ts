@@ -1,29 +1,22 @@
-"use client";
+'use client'
 
-import { useCallback, useState } from "react";
-import type { GravityState, Vector3 } from "../types";
-
-const DEFAULT_GRAVITY: Vector3 = { x: 0, y: -9.81, z: 0 };
+import { useCallback, useState } from 'react'
+import { usePhysicsContext } from '../context'
+import type { GravityState } from '../types'
 
 /**
- * Hook for reading and modifying the gravity vector.
- *
- * @param initial - Initial gravity vector (default: Earth gravity)
- *
- * @example
- * ```tsx
- * const { gravity, setGravity } = useGravity();
- * // Moon gravity:
- * setGravity({ x: 0, y: -1.62, z: 0 });
- * ```
+ * Read and control gravity in the physics world.
  */
-export function useGravity(initial: Vector3 = DEFAULT_GRAVITY): GravityState {
-  const [gravity, setGravityState] = useState<Vector3>(initial);
+export function useGravity(): GravityState {
+  const { world, ready } = usePhysicsContext()
+  const [gravity, setGravityState] = useState<[number, number, number]>([0, -9.81, 0])
 
-  const setGravity = useCallback((newGravity: Vector3) => {
-    setGravityState(newGravity);
-    // Update the physics world gravity vector.
-  }, []);
+  const setGravity = useCallback((g: [number, number, number]) => {
+    if (world && ready) {
+      world.gravity = { x: g[0], y: g[1], z: g[2] }
+    }
+    setGravityState(g)
+  }, [world, ready])
 
-  return { gravity, setGravity };
+  return { gravity, setGravity }
 }

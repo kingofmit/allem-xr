@@ -1,0 +1,20 @@
+{
+  "name": "create-allem-xr",
+  "version": "0.1.0",
+  "description": "Scaffold a new Allem XR mixed reality app",
+  "type": "module",
+  "bin": {
+    "create-allem-xr": "./dist/index.js"
+  },
+  "files": ["dist", "template"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --clean",
+    "dev": "tsup src/index.ts --format esm --watch"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  },
+  "license": "MIT"
+}
