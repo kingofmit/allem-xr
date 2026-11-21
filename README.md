@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://doi.org/10.5281/zenodo.24243178"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.24243178.svg" alt="DOI" /></a>
+  <a href="https://doi.org/10.5281/zenodo.24243177"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.24243177.svg" alt="DOI" /></a>
   <a href="https://www.npmjs.com/package/@allem-xr/core"><img src="https://img.shields.io/npm/v/@allem-xr/core.svg" alt="npm version" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
   <img src="https://img.shields.io/badge/react-18%20%7C%2019-61dafb" alt="React" />
